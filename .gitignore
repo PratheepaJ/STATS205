@@ -1,0 +1,16 @@
+*.xlsx
+*.html
+*.Rmd
+ClassList/
+Gradings/
+HomeworkAssignments/
+LectureNotes/*.html
+MyNotes/
+*.docx
+References/
+*.pdf
+Syllabus/sample_syllabus/
+Syllabus/*.html
+Syllabus/*.docx
+Syllabus/*.pdf
+Textbook/
