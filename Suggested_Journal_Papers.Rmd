@@ -1,0 +1,14 @@
+---
+title: "STATS 205: Suggested Journal Papers (Spring 2019)"
+author: "Pratheepa Jeganathan"
+date: "4/19/2019"
+output: pdf_document
+---
+
+**I will keep updating this list**
+
+1) A centenary review on nonparametric statistics research published in Biometrika journal: [**link here**](https://academic.oup.com/biomet/article/88/1/143/221398).
+
+2) A special issue on nonparametric statistics in statistical sciences journal: [**link here for the introduction to that special issue**](https://projecteuclid.org/download/pdfview_1/euclid.ss/1113832719).
+
+3) The philosophy of statistics by Andrew Gelman: [**link here**](https://www.jstor.org/stable/25681293?seq=1#metadata_info_tab_contents).

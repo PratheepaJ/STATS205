@@ -1,0 +1,296 @@
+---
+title: "Lecture 7: Discrete data problems I"
+shorttitle: "STATS 205 Lecture 7"
+author: "Pratheepa Jeganathan"
+date: "04/17/2019"
+output: 
+  beamer_presentation:
+    colortheme: "seahorse"
+    slide_level: 2
+    includes:
+      in_header: header.tex
+bibliography: nonparamterics.bib
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.width = 3,fig.height = 3, fig.align="center",message=FALSE, warning=FALSE)
+```
+
+#  Recall
+
+##
+- One sample sign test, Wilcoxon signed rank test, large-sample approximation, median, Hodges-Lehman estimator, distribution free confidence interval.
+- Jackknife for bias and standard error of an estimator.
+- Bootstrap samples, bootstrap replicates.
+- Bootstrap standard error of an estimator.
+- Bootstrap percentile confidence interval.
+- Hypothesis testing with the bootstrap (one-sample problem.)
+- Assessing the error in bootstrap estimates.
+- Example: inference on ratio of heart attack rates in aspirin-intake group to placebo group.
+- The exhaustive bootstrap distribution
+
+# Discrete random variable with two categories
+
+## A binomial test
+
+- Let $X_{i}$ be a (Bernoulli) random variable (two categories - success/failure) with success probability $p$. 
+    - $\E \left(X_{i}\right) = p$ and $\V \left(X_{i}\right) = p(1-p)$.
+- Statistical problems:
+    - Hypothesis testing on $p$.
+    - Confidence interval for $p$.
+    - Estimator for $p$.
+- Let $B = \sum_{i=1}^{n}X_{i}$ be the total number of success.
+- $B \sim \text{Binomial} \left(n, p\right)$.
+
+
+## A binomial test 
+
+- Hypothesis test: $\text{H}_{0}: p = p_{0}$ versus $\text{H}_{A}: p \neq p_{0}$.
+    - Test statistic: $B = \sum_{i=1}^{n}X_{i} \sim \text{Binomial} \left(n, p_{0}\right)$.
+    - Rejection regions
+        - $\text{H}_{A}: p > p_{0}$, Reject $\text{H}_{0}$ if $B \geq b_{\alpha; n, p_{0}}$.
+        - $\text{H}_{A}: p < p_{0}$, Reject $\text{H}_{0}$ if $B \leq c_{\alpha; n, p_{0}}$.
+        - $\text{H}_{A}: p \neq p_{0}$, Reject $\text{H}_{0}$ if $B \geq b_{\alpha_{1}; n, p_{0}}$ or $B \leq c_{\alpha_{2}; n, p_{0}},$ where $\alpha_{1}+\alpha_{2}=\alpha$.
+
+- Due to discreteness of $B$, we cannot do test for all $\alpha$ values.
+
+
+## A binomial test (large-sample approximation)
+  
+```{r}
+n = 10; p0 = 1/2; nsim = 1000
+B = rbinom(nsim, size = n, prob = p0)
+```
+  
+## A binomial test (large-sample approximation)
+  
+```{r}
+hist(B, breaks = 30)
+```
+
+
+## A binomial test (large-sample approximation)
+```{r echo=FALSE}
+library(ggplot2)
+df = data.frame(B=B)
+ggplot(df, aes(sample = B)) + 
+  stat_qq() +
+  ggtitle("Normal Q-Q plot") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+```
+
+
+## A binomial test (large-sample approximation)
+  
+```{r}
+n = 100; p0 = 1/2; nsim = 10000
+B = rbinom(nsim, size = n, prob = p0)
+```
+  
+## A binomial test (large-sample approximation)
+  
+```{r}
+hist(B, breaks = 30)
+```
+
+
+## A binomial test (large-sample approximation)
+```{r echo=FALSE}
+library(ggplot2)
+df = data.frame(B=B)
+ggplot(df, aes(sample = B)) + 
+  stat_qq() +
+  ggtitle("Normal Q-Q plot") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+```
+
+## A binomial test (large-sample approximation)
+- When $\text{H}_{0}: p = p_{0}$ is true 
+    - $\E \left(B\right) = n p_{0}$ and 
+    - $\V \left(B\right) = n p_{0}(1-p_{0})$
+    - The standardized version of $B$ is $Z = \dfrac{B-n p_{0}}{\left(n p_{0}(1-p_{0})\right)^{1/2}}$ and
+    - $Z \sim N\left(0,1\right)$.
+    - $Z^{2} \sim \chi^{2}_{df=1},$ where df is degrees of freedom.
+
+
+## A binomial test (large-sample approximation)
+
+- When $n \to \infty$, while $p = p_{0}$ is fixed under $\text{H}_{0}$, test statistic $Z \sim N\left(0,1\right)$
+- Rejection regions
+    - $\text{H}_{A}: p > p_{0}$, Reject $\text{H}_{0}$ if $Z \geq z_{\alpha}$.
+    - $\text{H}_{A}: p < p_{0}$, Reject $\text{H}_{0}$ if $Z \leq -z_{\alpha}$.
+    - $\text{H}_{A}: p \neq p_{0}$, Reject $\text{H}_{0}$ if $Z \geq z_{\alpha/2}$ or $Z \leq -z_{\alpha/2}$.
+
+##  Example: Sensory Difference Tests
+- Experiment:
+    - To each of $n$ panelists, three test samples are presented in a randomized order. 
+    - Two of the samples are known to be identical; the third is different. The panelist is then supposed to select
+the odd sample.
+    - Assume panelists are homogeneous trained judges, so experiment has $n$ Bernoulli trials.
+    - Let $p$ success probability corresponds to a correct identification of the odd sample.
+- Test the hypothesis that there is a basis for discrimination (i.e. $\text{H}_{A}: p > \dfrac{1}{3}$).
+
+##  Example: Sensory Difference Tests (use rejection region)
+- Data:
+    - Out of 50 trials, there were 25 correct selections and 25 incorrect selections.
+- $\text{H}_{0}: p = \dfrac{1}{3}$ versus $\text{H}_{A}: p > \dfrac{1}{3}$.
+- Test statistic $Z = \dfrac{B - 50 \left(\dfrac{1}{3}\right)}{\left(50 \left(\dfrac{1}{3}\right)\left(\dfrac{2}{3}\right)\right)^{1/2}}$. (large-sample approximation)
+- Significance level: $\alpha = .05$.
+
+```{r}
+qnorm((1-.05), mean = 0, sd =1)
+```
+- Rejection region: $Z \geq z_{.05} = 1.645$.
+
+##  Example: Sensory Difference Tests
+- Observed test statistic $Z_{o} = \dfrac{25 - 50 \left(\dfrac{1}{3}\right)}{\left(50 \left(\dfrac{1}{3}\right)\left(\dfrac{2}{3}\right)\right)^{1/2}}= 2.5$.
+```{r}
+Z.obs = (25 - 50*1/3)/(sqrt(50*1/3*2/3)); Z.obs
+```
+- The large sample approximation value $Z_{o}=2.5 > 1.645$ and thus we reject $\text{H}_{0}: p = \dfrac{1}{3}$ in favor of $p > \dfrac{1}{3}$ at the approximate $\alpha = .05$ level. Thus there is evidence of a basis for discrimination in the sensory test.
+
+## Example: Sensory Difference Tests (use p-value)
+
+- P -value corresponding to observed test statistic value $Z_{o} = 2.5$ is $P\left(Z \geq 2.5\right)$
+```{r}
+1 - pnorm(2.5)
+```
+- Thus, the smallest significance level at which we reject $\text{H}_{0}$ in favor of $p > \dfrac{1}{3}$ using the large-sample approximation is .0062.
+
+- The exact P-value in this case is $P\left(B \geq 25\right) = 1 - P\left(B \leq 24\right)$
+```{r}
+1-pbinom(24,50,1/3)
+```
+
+## Calculating Power
+
+- Suppose we have $n=50$ and we decide to employ the approximate
+$\alpha = .05$ level test of $\text{H}_{0}: p = \dfrac{1}{3}$ versus $\text{H}_{A}: p > \dfrac{1}{3}$.
+- We found that test reject $\text{H}_{0}$ is $Z \geq 1.645$.
+- What is the power of this test if in fact $p = .6$?
+    - Power is the probability of rejecting $\text{H}_{0}$ when $\text{H}_{A}$ is true. 
+   
+    
+## Calculating Power
+
+- Now $p = .6$, $Z = \dfrac{B - 50 \left(\dfrac{1}{3}\right)}{\left(50 \left(\dfrac{1}{3}\right)\left(\dfrac{2}{3}\right)\right)^{1/2}}$ is no longer standard normal.
+- We have $Z^{*}=\dfrac{B - 50 \left(.6\right)}{\left(50 \left(.6\right)\left(.4\right)\right)^{1/2}} \sim \text{N}\left(0, 1\right)$.
+\begin{equation}
+    \tiny
+    \notag
+    \begin{split}
+    \text{Power}& =  P\left(Z \geq 1.645| p = .6\right)\\
+    &= P_{p = .6}\left(\dfrac{B - 50 \left(\dfrac{1}{3}\right)}{\left(50 \left(\dfrac{1}{3}\right)\left(\dfrac{2}{3}\right)\right)^{1/2}} \geq 1.645\right)\\
+    &=  P_{p = .6}\left(B \geq 1.645 \left(50 \left(\dfrac{1}{3}\right)\left(\dfrac{2}{3}\right)\right)^{1/2} + 50 \left(\dfrac{1}{3}\right)\right)\\
+    &=  P_{p = .6}\left(\dfrac{B - 50 \left(.6\right)}{\left(50 \left(.6\right)\left(.4\right)\right)^{1/2}} \geq \dfrac{1.645 \left(50 \left(\dfrac{1}{3}\right)\left(\dfrac{2}{3}\right)\right)^{1/2} + 50 \left(\dfrac{1}{3}\right)- 50 \left(.6\right)}{\left(50 \left(.6\right)\left(.4\right)\right)^{1/2}}\right)\\
+    &= P\left(Z^{*} \geq -2.27 \right) = .9884.
+    \end{split}
+    \end{equation}
+    
+```{r}
+1-pnorm(-2.27)
+```
+
+
+## An estimator for probability of success
+
+- The estimator of the probability of success $p$, associated with the statistic $B$, is  $\hat{p} = \dfrac{B}{n}$.
+- Standard error of $\hat{p}$ is $\sqrt{\dfrac{p(1-p)}{n}}$ and estimate is $\sqrt{\dfrac{\hat{p}(1-\hat{p})}{n}}$.
+
+## Confidence interval for probability of success
+
+- The large-sample $(1-\alpha)100\%$ confidence interval for $p$ is
+$\left(\hat{p} - z_{\alpha/2} \sqrt{\dfrac{\hat{p}(1-\hat{p})}{n}}, \hat{p} + z_{\alpha/2} \sqrt{\dfrac{\hat{p}(1-\hat{p})}{n}} \right)$, where $z_{\alpha/2}$ is the upper $\alpha/2$ quantile of standard normal distribution.
+```{r}
+library(binom)
+binom.confint(x=25, n=50, conf.level=.95, methods = "asymptotic")
+```
+
+
+# Discrete random variable with more than two categories
+
+## Pearson’s Chi-Squared Goodness-of-Fit Test 
+
+- $\chi^{2}$ test for specified multinomial probabilities.
+- Let $n$ experiments with frequencies $X_{1}, \cdots, X_{k}$ corresponding to the $k$ categories.
+- Test the hypothesis that the multinomial probabilities $p_{1}, \cdots, p_{k}$ are equal to specified or known values $p_{1}^{0}, \cdots, p_{k}^{0}$.
+- $\text{H}_{0}: p_{1} = p_{1}^{0}, \cdots, p_{k} = p_{k}^{0}$ versus $\text{H}_{A}: p_{i} \neq p_{i}^{0}$ for at least one value $i$.
+- Pearson’s chi-squared statistic
+    $\chi^{2} = \sum \dfrac{\left(\text{observed}-\text{expected}\right)^{2}}{\text{expected}}$.
+- Pearson’s chi-squared statistic, in notation,
+    $\chi^{2} = \sum_{i=1}^{k}\dfrac{\left(X_{i} - np_{i}^{0}\right)^2}{np_{i}^{0}}$.
+- A large-sample approximation (when $np_{i}^{0} \geq 5$ for each $i$)
+    - As $n \to \infty$, $\chi^{2}$ is that of a chi-squared distribution with $k-1$ degrees of freedom 
+- Rejection region: reject $\text{H}_{0}$ if $\chi^{2} \geq \chi^{2}_{\alpha, k-1}$.
+
+
+##   Example (Outcomes of Pea Plant Experiments)
+- Gregor Mendel’ s famous genetics experiments on pea plants.
+- Experiment:
+    - Cross-pollinated purebred plants with specific traits and observed and recorded the results over many generations.
+    - seed shape (round or angular), cotyledon (part of the embryo within the seed) color (yellow or green), seed coat color (colored or white), pod shape (inflated or constricted), pod color (green or yellow), flower position (axial or terminal), stem length (long or short).
+
+## Example (Outcomes of Pea Plant Experiments)
+- Contingency table
+```{r}
+df = data.frame(Dominant = c(5474,6022,705,882,428,651,787), 
+  Recessive = c(1850,2001,224,299,152,207,277))
+rownames(df) = c("Seed_shape", "Cotyledon_color", 
+  "Seed_coat_color", "Pod_shape", "Pod_color", 
+  "Flower_position", "Stem_length"); df
+```
+
+## Example (Outcomes of Pea Plant Experiments)
+
+- Goodness-of-fit test
+- $\text{H}_{0}: p_{1d} = p_{2d} = \cdots = p_{7d} = \dfrac{3}{4}$ versus $\text{H}_{A}: p_{id} \neq \dfrac{3}{4}$ for at least one $i$, $p_{id}$ is the probability of the second offspring of cross-pollinated purebred plant have dominant characteristic.
+
+```{r}
+library(dplyr); df = mutate(df, 
+  expected.ratio = rep("3:1",times = 7)); 
+rownames(df) = c("Seed_shape", "Cotyledon_color", "Seed_coat_color", "Pod_shape", "Pod_color", "Flower_position", "Stem_length"); df
+```
+
+## Example (Outcomes of Pea Plant Experiments)
+- Chi-squared statistic for each row.
+```{r}
+chi.sq = apply(df[,1:2], 1, function(x){
+  chisq.test(c(x[1],x[2]), 
+    p = c(.75, .25))$statistic
+}); df = mutate(df, chi.sq = chi.sq); df
+```
+
+## Example (Outcomes of Pea Plant Experiments)
+- Each row has a $\chi^{2}_{df=1}$ distribution with degrees of freedom (df) 1.
+- Sum seven independent $\chi^{2}$ random variables with each df 1 gives a $\chi^{2}_{df=7}$ with degrees of freedom (df) 7.
+```{r}
+sum(df$chi.sq)
+```
+
+Where does the observed chi-squared value fall?
+
+```{r}
+pchisq(sum(df$chi.sq), df = 7, lower.tail = TRUE)
+```
+- The value 2.1389 falls in the lower tail of the distribution. Thus, we do not have enough evidence to reject $\text{H}_{0}$.
+
+## Example (Outcomes of Pea Plant Experiments)
+- Mendel did many more experiments than the data we used. 
+- Fisher suspected that an overzealous assistant might have biased the data.
+- Over time the works of Mendel and many others have led to acceptance of Mendel’s genetic theories. 
+- Read more about Mendel's genetics [here](https://www2.palomar.edu/anthro/mendel/mendel_1.htm)
+
+##  References for this lecture
+
+**HWC** Chapter 2
+
+**HWC** Chapter 2, page 29, comment 26 (Pearson’s Chi-Squared Goodness-of-Fit Test )
+
+<!-- Homework probelms: Page 21, Problem 9 (discrete data with two categories.) In addition, find the power of the test if $p =.7$ and $p = .8$. -->
+
+<!-- Homework probelm: Page 24, Problem 11 (estimate and standard error for $\hat{p}$). -->
+
+<!-- Homework probelm: Page 31, Problem 15 (confidence interval for $p$). -->
+
+<!-- Homework problem: Page 33, Problem 23 (Chi-squared test for more than two categories) -->

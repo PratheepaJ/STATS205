@@ -1,0 +1,16 @@
+---
+title: "Nonparamatric statistics"
+author: "Pratheepa Jeganathan"
+date: "1/7/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##  References
+
+## To be taught
+
+1) [Mean shift for clustering](https://en.wikipedia.org/wiki/Mean_shift) 
