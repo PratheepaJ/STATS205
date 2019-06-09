@@ -73,7 +73,7 @@ knitr::opts_chunk$set(echo = TRUE, fig.width = 3,fig.height = 3, fig.align="cent
 \end{tabular}
 
 - The number of success $T$ is distributed according to the hyper geometry distribution under the null hypothesis.
-- $P\left(T = t\right) = \dfrac{{4 \choose t}{4 \choose 4-t}}{{8 \choose 4}}$.
+- $P\left(T = t\right) = \dfrac{{4 \choose t} \times {4 \choose 4-t}}{{8 \choose 4}}$.
 
 ## Example (Lady tasting tea)
 ```{r}
