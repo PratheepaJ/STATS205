@@ -1,0 +1,306 @@
+---
+title: "Lecture 11: Permutation tests"
+shorttitle: "STATS 205 Lecture 11"
+author: "Pratheepa Jeganathan"
+date: "04/26/2019"
+output: 
+  beamer_presentation:
+    colortheme: "seahorse"
+    slide_level: 2
+    includes:
+      in_header: header.tex
+bibliography: nonparamterics.bib
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.width = 3,fig.height = 3, fig.align="center",message=FALSE, warning=FALSE)
+```
+
+#  Recall
+
+##
+- One sample sign test, Wilcoxon signed rank test, large-sample approximation, median, Hodges-Lehman estimator, distribution-free confidence interval.
+- Jackknife for bias and standard error of an estimator.
+- Bootstrap samples, bootstrap replicates.
+- Bootstrap standard error of an estimator.
+- Bootstrap percentile confidence interval.
+- Hypothesis testing with the bootstrap (one-sample problem.)
+- Assessing the error in bootstrap estimates.
+- Example: inference on ratio of heart attack rates in the aspirin-intake group to the placebo group.
+- The exhaustive bootstrap distribution
+
+##
+- Discrete data problems (one-sample, two-sample proportion tests, test of homogeneity, test of independence)
+- Two-sample problems (location problem - equal variance, unequal variance, exact test or Monte Carlo, large-sample approximation, H-L estimator, dispersion problem, general distribution)
+
+# Permutation tests
+
+## Permutation tests
+- The Mann-Whitney/Wilcoxon test is actually a special case of a permutation test.
+    - Re-assignment of combined ranks with probability of each re-assignment is $\dfrac{1}{{N \choose n}}$ under $\text{H}_{0}$.
+    
+- Permutation test are computationally-intensive but exists before computers.
+- R. A Fisher (1930's) introduced to support theoretical argument of Student's t-test.
+
+## Permutation test
+
+- Two-sample problem
+    - $\vX = \left(X_{1}, \cdots, X_{m}\right)$ and $\vY = \left(X_{1}, \cdots, X_{m}\right)$ are drawn from $F\left(\cdot\right)$ and $G\left(\cdot\right)$, respectively.
+- Test $\text{H}_{0}: F = G$.
+    - If $\text{H}_{0}$ is true, any of the observations could have come equally well from either $F$ or $G$. 
+    
+## Permutation test recipe (two-sample problem)
+
+- Decide a test statistic $T$.
+- Compute the test statistic for the given data $t_{0}$.
+- $\text{H}_{0}$ assigns equal probabilities to all possible re-assignments of combined observations.  
+- P-value is defined to be the probability of observing at least that large a value when the null hypothesis is true.
+$$\text{p-value} = P_{\text{H}_{0}}\left(T^{*} \geq t_{0}\right),$$ where $t_{0}$ is fixed and the random variable $T^{*}$ has the null hypothesis distirbution, the distribution of $T$ if $\text{H}_{0}$ is true.
+- The smaller value of p-value, the stronger the evidence against $\text{H}_{0}$.
+    
+## Example (Permutation test)
+
+- The mouse data in **ET** page 11, table 2.1.
+    - Sixteen mice were randomly assigned to a treatment group or a control group. 
+    - Measured their survival times, in days, following a test surgery. 
+    - Did the treatment prolong survival?
+```{r}
+ET.table.2.1 = list(treatment = 
+    c(94, 197, 16, 38, 99, 141,23), 
+  control = 
+    c(52, 104, 146, 10, 51, 30, 40, 27, 46))
+ET.table.2.1
+```
+
+
+## Example (Permutation test)
+
+- Let $X$ be survival times of mice in treatment group and $Y$ be survival times of mice in control group.
+- Observed small amount of data
+```{r}
+lapply(ET.table.2.1, function(x){length(x)})
+```
+
+## Example (Wilcoxon rank sum test)
+
+- Use Wilcoxon test (dispersion is equal)
+
+```{r}
+wilcox.test(x = ET.table.2.1$treatment, 
+  ET.table.2.1$control, alternative = "greater", 
+  paired = FALSE, exact = TRUE)
+```
+
+
+## Example (Wilcoxon rank sum test)
+- Use permutation to find the null distribution of Wilcoxon rank sum test statistic.
+- The exact p-value is computed using this null distribution.
+
+## Example (Mean difference test statistic)
+
+- Permutation test for the general hypothesis $F = G$.
+    - Assume $F$ and $G$ only differ in location.
+- $T = \bar{X} - \bar{Y}$. Test statistic is mean difference.
+- $t_{0}$
+
+```{r}
+t.0 = round(mean(ET.table.2.1$treatment) - 
+  mean(ET.table.2.1$control), digits = 2); t.0
+```
+
+- This indicates treatment distribution $F$ gives longer survival times than does control distribution $G$.
+- Is it significant?
+
+## Example (Mean difference test statistic)
+
+- Find the all possible re-assignments of combined observations under $\text{H}_{0}$.
+    - Combine all the $N= m+n$ observations from both treatment and control.
+    - Take a sample of size $m$ without replacement to treatment group.
+    - Assign remaining $n$ observations to control.
+    - There are ${N \choose n}$ possible re-assignments with $\dfrac{1}{{N \choose n}}$ probability.
+    
+## Example (Mean difference test statistic)
+
+- Order statistic representation
+```{r}
+library(dplyr)
+combined.sample = data.frame(group = c(rep("treatment", 
+  length(ET.table.2.1$treatment)), 
+  rep("control", 
+    length(ET.table.2.1$control))), 
+  value = c(ET.table.2.1$treatment, 
+    ET.table.2.1$control))
+
+combined.sample = mutate(combined.sample, 
+  rank.combined = rank(value))
+combined.sample = 
+  combined.sample[order(combined.sample$rank.combined, 
+    decreasing = FALSE), ]
+```
+
+## Example (Mean difference test statistic)
+```{r}
+combined.sample 
+```
+
+## Example (Mean difference test statistic)
+- Find all possible re-assignments.
+```{r eval=FALSE}
+library(gtools)
+all.possible.assignments  = combinations(n = dim(combined.sample)[1], 
+  r = length(ET.table.2.1$treatment), 
+  v = combined.sample$rank.combined)
+saveRDS(all.possible.assignments, "all.possible.assignments.rds")
+```
+
+## Example (Mean difference test statistic)
+```{r}
+all.possible.assignments  = readRDS("all.possible.assignments.rds")
+
+compute.T.star = function(combined.sample, 
+  all.possible.assignments){
+  
+  T.star = apply(all.possible.assignments, 1, 
+    function(x){
+    x.star  = combined.sample$value[x]
+    y.star  = combined.sample$value[-x]
+    mean(x.star) - mean(y.star)
+  })
+  
+  return(T.star)
+}
+T.star = compute.T.star(combined.sample = combined.sample, 
+  all.possible.assignments = all.possible.assignments)
+```
+
+## Example (Mean difference test statistic)
+
+- Exact p-value
+```{r}
+p.value.exact = mean(T.star >= t.0)
+round(p.value.exact, digits = 3)
+```
+
+## Example (Permutation test in practice)
+
+- Choose $B$ possible re-assignments, each being randomly selected from the set of all ${N \choose n}$ possible re-assignments [$B$ usually be at least 1000]. 
+
+```{r}
+B = 1000
+compute.T.star.Monte.Carlo = function(x, 
+  combined.sample){
+  re.assignment.index = sample(combined.sample$rank.combined, 
+    size = length(combined.sample$rank.combined), 
+    replace = FALSE)
+  
+  x.star = combined.sample$value[re.assignment.index[1:length(ET.table.2.1$treatment)]]
+  y.star  = combined.sample$value[re.assignment.index[(length(ET.table.2.1$treatment)+1):dim(combined.sample)[1]]]
+  T.star = mean(x.star) - mean(y.star)
+  return(T.star)
+}
+```
+
+##
+```{r}
+T.star = lapply(seq_along(1:B), 
+  FUN = compute.T.star.Monte.Carlo, 
+  combined.sample = combined.sample)
+T.star = unlist(T.star)
+```
+
+## Example (Permutation test in practice)
+
+- P-value using Monte Carlo method
+```{r}
+P.value.MC = mean(T.star >= t.0)
+round(P.value.MC, digits = 3)
+```
+
+## Example (Permutation test based on Student's t test statistic)
+- $T = \dfrac{\bar{X}- \bar{Y}}{\sigma\sqrt{\dfrac{1}{m}+\dfrac{1}{n}}}$. - We don't know $\sigma$ and an estimate for $\sigma$ is $\bar{\sigma}$, the standard deviation of combined sample.
+```{r}
+sigma.bar = sd(c(ET.table.2.1$treatment,
+  ET.table.2.1$control)); round(sigma.bar, digit = 2)
+student.t.0 = (mean(ET.table.2.1$treatment) - mean(ET.table.2.1$control))/(sigma.bar * sqrt(1/length(ET.table.2.1$treatment) + 1/(length(ET.table.2.1$control))))
+round(student.t.0, digits = 2)
+```
+
+## Example (Permutation test based on Student's t test statistic)
+```{r}
+B = 1000
+compute.T.star.Monte.Carlo = function(x, 
+  combined.sample){
+  re.assignment.index = sample(combined.sample$rank.combined, 
+    size = length(combined.sample$rank.combined), 
+    replace = FALSE)
+  
+  x.star = combined.sample$value[re.assignment.index[1:length(ET.table.2.1$treatment)]]
+  y.star  = combined.sample$value[re.assignment.index[(length(ET.table.2.1$treatment)+1):dim(combined.sample)[1]]]
+  
+  sigma.bar.star = sd(c(x.star, y.star))
+  student.t.star = (mean(x.star) - mean(y.star))/(sigma.bar.star * sqrt(1/length(x.star)+1/(length(y.star))))
+
+  T.star = student.t.star
+  return(T.star)
+}
+
+```
+
+## Example (Permutation test based on Student's t test statistic)
+```{r}
+T.star = lapply(seq_along(1:B), 
+  FUN = compute.T.star.Monte.Carlo, 
+  combined.sample = combined.sample)
+T.star = unlist(T.star)
+```
+
+## Example (Permutation test based on Student's t test statistic)
+```{r}
+p.value.student.t.test.MC = mean(T.star >= student.t.0)
+round(p.value.student.t.test.MC, digits = 3)
+```
+
+## Example (Compare the permutation test results using different test statistics)
+
+- Rank-based permutation test: exact p-value with $T = W$ is .340. (Rank-based permutation test)
+
+- Exact p-value with $T =  \bar{X} - \bar{Y}$ is .141.
+- P-value with $T =  \bar{X} - \bar{Y}$ and using Monte Carlo method is 
+```{r}
+round(P.value.MC, digits = 3)
+```
+    
+- P-value with $T = \dfrac{\bar{X}- \bar{Y}}{\sigma\sqrt{\dfrac{1}{m}+\dfrac{1}{n}}}$ and using Monte Carlo method is 
+    
+```{r}
+round(p.value.student.t.test.MC, digits = 3)
+```
+
+
+## Permutation and bootstrap hypothesis tests
+- Permutation tests
+    - Define $F_{0}$ the null distirbution of test statistics using the possible re-assginments of observations.
+    - Use for more general test of $F(t) = G(t)$.
+    - Important aspect of permutation test is its accuracy.
+        - If $\text{H}_{0}: F = G$ is true,
+        $P_{\text{H}_{0}}\lbrace \text{p-value}_{\text{perm}} < \alpha \rbrace = \alpha$.
+- Bootstrap testing.
+    - Uses plug-in estimator for $F_{0}$. Denote the combined sample $\vz$ and let its empirical distirbution be $\hat{F}_{0}$, putting probability $\dfrac{1}{(n+m)}$ on each member of $\vz$.
+    - Can be used for many statistical problems when there is nothing to permute.
+    - Bootstrap p-value is approximate.
+
+## Exchangeability
+- A sufficient condition for permutation test is exchangeable of observations.
+    - Consider random sample $X_{1}, \cdots X_{n}$.
+    - If their joint distribution are equal under permuations $\Pi$ 
+    $P_{X_{1}, \cdots X_{n}}\left(x_{1}, \cdots, x_{n} \right) = P_{X_{\Pi(1)}, \cdots X_{\Pi(n)}}\left(x_{\Pi(1)}, \cdots, x_{\Pi(n)} \right)$, then $X_{1}, \cdots X_{n}$ are exchangable.
+- This is a weaker assumption than indepdendence of observations.
+
+##  References for this lecture
+
+**ET** Chapter 15
+
+**Li:H1997**: Holmes (1997). Lecture Notes on Computer Intensive Methods in Statistics.
+
+<!-- Homework 4: Problem one-sample problem Darwin and Fisher  -->
