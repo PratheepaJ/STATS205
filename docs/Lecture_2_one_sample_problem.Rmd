@@ -110,7 +110,7 @@ collected at the Swiss Federal Observatory in Zurich and the Tokyo Astronomical 
 
 ## Large-Sample Approximation (Sign test)
 
-- $B^{*} = \dfrac{B- \E_{0}\left(B\right)}{{\V_{0}\left(B\right)}^{1/2}} \sim \text{N}\left(0,1\right) \hspace{.2in} \text{as} \hspace{.2in} n 	\to \infty \hspace{.2in} , \text{where}$
+- $B^{*} = \dfrac{ B- \E_{0}\left(B\right) }{ \V_{0}\left(B\right)^{1/2} } \sim \text{N}\left(0,1\right) \hspace{.2in} \text{as} \hspace{.2in} n 	\to \infty \hspace{.2in} , \text{where}$
 - $\E_{0}\left(B\right) = \dfrac{n}{2}$ and $\V_{0}\left(B\right)= \dfrac{n}{4}$
 
 - Rejection regions
