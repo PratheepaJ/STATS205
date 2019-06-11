@@ -1,0 +1,275 @@
+---
+title: "Lecture 12: Permutation tests II"
+shorttitle: "STATS 205 Lecture 12"
+author: "Pratheepa Jeganathan"
+date: "04/29/2019"
+output: 
+  beamer_presentation:
+    colortheme: "seahorse"
+    slide_level: 2
+    includes:
+      in_header: header.tex
+bibliography: nonparamterics.bib
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.width = 3,fig.height = 3, fig.align="center",message=FALSE, warning=FALSE)
+```
+
+#  Recall
+
+##
+- One sample sign test, Wilcoxon signed rank test, large-sample approximation, median, Hodges-Lehman estimator, distribution-free confidence interval.
+- Jackknife for bias and standard error of an estimator.
+- Bootstrap samples, bootstrap replicates.
+- Bootstrap standard error of an estimator.
+- Bootstrap percentile confidence interval.
+- Hypothesis testing with the bootstrap (one-sample problem.)
+- Assessing the error in bootstrap estimates.
+- Example: inference on ratio of heart attack rates in the aspirin-intake group to the placebo group.
+- The exhaustive bootstrap distribution
+
+
+##
+- Discrete data problems (one-sample, two-sample proportion tests, test of homogeneity, test of independence)
+- Two-sample problems (location problem - equal variance, unequal variance, exact test or Monte Carlo, large-sample approximation, H-L estimator, dispersion problem, general distribution)
+- Permutation tests (permutation test for continuous data, different test statistic, accuracy of permutation tests)
+
+# Permutation test (discrete data)
+
+## Example (The lady tasting tea)
+- This example is from `The Design of Experiments` by Fisher (1935), chapter II [link here](https://www.phil.vt.edu/dmayo/PhilStatistics/b%20Fisher%20design%20of%20experiments.pdf).
+- A British lady claimed that she can tell whether the tea or the milk was added first to a cup.
+- Fisher proposed a randomized experiment.
+- The null hypothesis is that the lady has no ability to taste the difference.
+
+## Example (Lady tasting tea)
+- Experiment:
+    - The lady provided with 8 randomly ordered cups of tea.
+        - In four cups, tea was added first.
+        - In other four cups, milk was added first.
+    - The lady has to select 4 cups prepared by one method.
+    - The lady knew the method used for the experiment.
+- Test statistic $T =$ the number of successes in selecting the 4 cups (the number of cups of the given type successfully selected)
+- What is the distribution of the test statistic $T$ under $\text{H}_{0}$?
+
+## Example (Lady tasting tea)
+
+- The distribution of $T$ under $\text{H}_{0}$ can be computed using the number of permutations because the judgement are equally likely.
+- Using the combination formula, $n = 8$ and $k = 4$, there are ${8 \choose 4} = 70$ possible combinations.
+
+
+## Example (Lady tasting tea)
+
+\begin{tabular}{ l l l }
+  \# of success & Arrangement & \# of permutations \\
+  \hline \\
+  0 & 0000 & ${4 \choose 0} \times {4 \choose 4}=1$ \\
+  1 & x000,0x00,00x0,000x & ${4 \choose 1} \times {4 \choose 3} = 16$ \\
+  2 & xx00,x0x0,x00x,0xx0,0x0x,00xx & ${4 \choose 2} \times {4 \choose 2}=36$ \\
+  3 & xxx0,xx0x,x0xx,0xxx & ${4 \choose 3} \times {4 \choose 1}=16$ \\
+  4 & xxxx & ${4 \choose 4} \times {4 \choose 0}=1$ 
+\end{tabular}
+
+- The number of success $T$ is distributed according to the hyper geometry distribution under the null hypothesis.
+- $P\left(T = t\right) = \dfrac{ {4 \choose t} \times {4 \choose 4-t} }{ {8 \choose 4} }$.
+
+## Example (Lady tasting tea)
+```{r}
+library(dplyr)
+t = 0:4
+hypergeometry = (choose(4,t)*choose(4,4-t))/choose(8,4)
+df = data.frame(t=t, p.t = round(hypergeometry, digits=3)); df
+```
+
+- The critical region for rejection of the null the lady has no ability to taste the difference at 5\% significance level is the single case of 4 successes of 4 possible. That is, $T \geq 4$.
+
+## Example (Lady tasting tea)
+- If the lady distinguish all the cups correctly only was Fisher willing to reject the null hypothesis (with 8 cups) at .014 significance level. 
+
+## Example (Lady tasting tea)
+- If $n$ is large, we can use Monte Carlo method to approximate the p-value.
+
+```{r}
+observed = c("milk", "milk", "milk", "milk", "tea",
+  "tea", "tea", "tea")
+t.0 = sum(observed[1:4]=="milk");t.0
+```
+
+##
+```{r}
+nperm = 10000
+permutations = replicate(nperm, sample(8, replace = FALSE))
+matches = apply(permutations, 2, function(i){
+  sum(observed[i][1:4] == "milk")
+  })
+data.frame(t=t,
+           p.t = round(hypergeometry, digits=3),
+           monte = round(table(matches)/nperm, digits=3))
+```
+
+- P-value is $P\left(T \geq t_{0}\right) = P\left(T \geq 4\right) = .014$ so reject the null hypothesis.
+
+## 
+- If we increase the number of cups to 16
+```{r}
+observed = c("tea", "milk", "milk", "milk", "tea",
+  "tea", "tea", "milk", "tea", 
+  "milk","tea","tea", "tea", 
+  "milk","milk","milk")
+nperm = 10000
+permutations = replicate(nperm, sample(16, 
+  replace = FALSE))
+
+matches = apply(permutations, 2,
+  function(i){
+  sum(observed[i][1:8] == "milk")
+  })
+```
+
+##
+
+```{r}
+data.frame(monte = round(table(matches)/nperm, 
+  digits=3))
+```
+
+- If the lady tasted 16 cups, it would be possible to reject $\text{H}_{0}$ without requiring perfect judgement.
+
+## Fisher's exact test (recall from lecture on discrete data problem)
+- Discrete data problem.
+\begin{tabular}{l l l l| l}
+ & & \multicolumn{2}{l}{Truth} &\\
+ & & Milk & Tea & \\
+ \hline
+ \parbox[t]{2mm}{\multirow{2}{*}{\rotatebox[origin=c]{90}{Guess}}}
+    & Milk & 4& 0 & \textbf{4}\\
+    & Tea & 0 & 4 & \textbf{4}\\
+ \hline 
+\end{tabular}
+- Testing of two probabilities/testing association of two discrete variables when the marginals are fixed.
+- The exact p-value is computed using the hyper geometry distribution (Fisher).
+
+##
+```{r}
+df = data.frame(milk=c(4,0), tea = c(0,4))
+fisher.test(df, alternative = "greater")
+```
+
+- Reject $\text{H}_{0}$. 
+
+##
+```{r}
+df = data.frame(milk=c(3,1), tea = c(1,3))
+fisher.test(df, alternative = "greater")
+```
+
+- Do not reject $\text{H}_{0}$. 
+
+# Exchangeability
+
+## Exchangeability
+- A sufficient condition for permutation test is exchangeable of observations.
+    - Consider random sample $X_{1}, \cdots X_{n}$.
+    - If their joint distribution are equal under permutations $\Pi$ 
+    $$P_{X_{1}, \cdots X_{n}}\left(x_{1}, \cdots, x_{n} \right) = P_{X_{\Pi(1)}, \cdots X_{\Pi(n)}}\left(x_{\Pi(1)}, \cdots, x_{\Pi(n)} \right),$$ then $X_{1}, \cdots X_{n}$ is exchangeable.
+- This is a weaker assumption than independence of observations.
+- An infinite sequence $X_{1}, \cdots, X_{n}, \cdots$ is said to be exchangeable if for all $n = 2,3, \cdots$, 
+$$X_{1}, \cdots X_{n } \stackrel{d}{=} X_{\Pi(1)}, \cdots, X_{\Pi(n)}$$ for all $\Pi \in S(n)$, where $S(n)$ is the group of permutations of $\lbrace 1,2, \cdots, n \rbrace$.  
+
+## Example (Exchangeability)
+- Independent and identically distributed observations are exchangeable.
+    - If $X_{1}, \cdots, X_{n}$ are independent and identically distributed, they are exchangeable, but not conversely.
+- Samples without replacement from a finite population are exchangeable:
+    - An urn contains b black balls, $r$ red balls, $y$ yellow balls, and so forth.
+    - A series of balls are extracted from the urn.
+    - After the $i$-th extraction, the color of the ball $X_{i}$ is noted and $k$ balls of the same color are added to the urn, where $k$ can be any integer, positive, negative, or zero.
+    - The set of random events $\lbrace X_{i} \rbrace$ form an exchangeable sequence, but not independent.
+
+## Example (Exchangeability)
+
+- $\vX = \left[X_{1}, \cdots, X_{n} \right]^{T} \sim \text{MVN}\left(\vmu, \Sigma \right)$, $\Sigma =\begin{pmatrix} 
+\sigma & \rho & \cdots & \rho \\
+\vdots &      &        &         \\
+\rho & \rho &\cdots & \sigma \\
+\end{pmatrix}$, $\vX$ is exchangeable, MVN stands for multivariate normal distribution.
+
+- A simple transformation will ensure that observations are exchangeable.
+    - Suppose $X$ comes from a population with mean $\mu$ and distribution $F\left(t-\mu \right)$.
+    - $Y$ comes from a population with mean $\nu$ and distribution $F\left(t-\nu\right)$ and independent of $X$.
+    - Define $X^{'} =  X - \mu$ and $Y^{'} =  Y - \nu$.
+    - $X^{'}$ and $Y^{'}$ are exchangeable.
+
+
+## Example (Exchangeability)
+
+- Flip a coin 20 times and we know there is 17 heads and 3 tails. If the outcome of 20 flips is exchangeable, then, we don't think of the positions that the 3 tails can occupy as being special.
+
+## Exchangeability and de Finetti's Theorem
+
+- de Finetti's theorem involves exchangeable 0-1 binary random variables $X_{1}, \cdots, X_{n}, \cdots$.
+- de Finetti shows that a binary sequence $X_{1}, \cdots, X_{n}, \cdots$ is exchangeable if and only if there exists a distribution function $F$ on $\left[0,1 \right]$ such that for all $n$, 
+$$p\left(x_{1}, \cdots, x_{n} \right)= \int_{0}^{1}\theta^{s_{n}}\left( 1-\theta\right)^{n-s_{n}}dF\left(\theta\right),$$ where $s_{n}=\sum_{i=1}^{n}x_{i}.$
+    - de Finetti (1931) shows that all exchangeable binary sequences are mixtures of Bernoulli sequences.
+    - Bernoulli distribution is obtained by conditioning with $\theta$:
+    $$P\left(x_{1}, \cdots, x_{n} |\theta\right) = \theta^{s_{n}}\left(1-\theta\right)^{n-s_{n}}.$$
+    - $X_{1}, \cdots, X_{n}|\theta$ IID $\Rightarrow$ $X_{1}, \cdots, X_{n}$ is exchangeable for all $n$.
+
+## Exchangeability and de Finetti's Theorem
+- Hewitt and Savage [-@hewitt1955] generalized de Finetti's theorem to any infinite exchangeable sequences.
+- Diaconis and Freedman [-@diaconis1980] generalized de Finetti's theorem to finite exchangeable sequences.
+
+# Application
+
+## Example (For modern data)
+
+- Permutation test for autism brain imaging data (Seiler 2016): [link here](http://christofseiler.github.io/stats205/Lecture11/Neuroimaging.html). 
+
+- Reference: [@nichols2002](https://onlinelibrary.wiley.com/doi/full/10.1002/hbm.1058).
+    - Multiple testing: p-value adjustment using permutation method [@westfall1993].
+
+## Example (neuroimaging experiments)
+- Preprocessed neuroimaging data from the Autism Brain Imaging Data Exchange (ABIDE). The data is openly available on the ABIDE [\color{blue}website\color{black}](http://preprocessed-connectomes-project.org/abide/) [@craddock2013].
+    - ABIDE is a collaboration of 16 international imaging sites.
+    - Neuroimaging data from 539 individuals suffering from Autism Spectrum Disorder (ASD) and 573 typical controls.
+    - In this analysis, we subset 40 participants (all acquired at Stanford).
+    - Measured cortical thickness voxel-by-voxel.
+    
+## Example (neuroimaging experiments)
+- Test voxelwise distribution of cortical thickness in autism population and healthy controls.
+    - Two-sample problem (voxelwise).
+    - Use Wilcoxon rank sum test (voxelwise).
+    - If we report all significant voxel at significance level of $\alpha = .05$, we will report many random results.
+- Adjust p-values for multiple testing using permutation approach.
+    
+## Example (neuroimaging experiments)
+
+- Single threshold test [@nichols2002;@westfall1993]
+    - Test statistic for testing each voxel: mean difference statistic $T^{k}$, where $k$ denotes the $k$-th voxel.
+    - For each possible $i$-th resampling, compute $t_{i}^{\text{max}}$, maximum of voxel statistic. 
+    - $t_{i}^{\text{max}}$ gives the permutation distribution for $T^{\text{max}}$.
+    - Define the critical threshold is the (C+1) largest member of the permutation distribution for $T^{\text{max}}$, where $C = [\alpha N]$, that is $\alpha N$ rounded down. For example, $C = [.05 \times 40]= 2$ and the threshold is $T^{\text{max}}_{(3)}$, the third largest member. 
+    - Voxels with statistics exceeding this threshold $T^{k} \geq T^{\text{max}}_{(3)}$ exhibit evidence against the corresponding voxel hypotheses at level $\alpha =.05$.
+    - Corrected P-value for each voxel is the proportion of the permutation distribution for the maximal statistic that is greater than or equal to voxel statistic.
+        - $\text{adjusted p-value}^{k} = \dfrac{\# \lbrace T^{\text{max}} \geq T^{k}\rbrace}{\# \text{permutations}}$.
+    
+
+## Summary
+- A sufficient condition for permutation test is exchangeable of observations.
+- If the observations are not exchangeable, then some permutations are more likely than others.
+- When doing permutation tests, in order to control the probability of type I error, one must establish that the observations are exchangeable under $\text{H}_{0}$.
+- Permutation approaches can be used for adjusting p-values in multiple testing problems.
+
+
+## References 
+\tiny
+
+**Li:C2016**: Seiler (2016). [Lecture Notes on Nonparametric Statistics](http://christofseiler.github.io/stats205/).
+
+**Li:H1997**: Holmes (1997). Lecture Notes on Computer Intensive Methods in Statistics.
+
+**Wikipedia**: [Lady tasting tea](https://en.wikipedia.org/wiki/Lady_tasting_tea).
+
+**F: 1935**: The design of experiments (1935) [Chapter I-III](https://www.phil.vt.edu/dmayo/PhilStatistics/b%20Fisher%20design%20of%20experiments.pdf).
+

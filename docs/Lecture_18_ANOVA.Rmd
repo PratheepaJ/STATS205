@@ -1,0 +1,336 @@
+---
+title: "Lecture 18: ANOVA"
+shorttitle: "STATS 205 Lecture 18"
+author: "Pratheepa Jeganathan"
+date: "05/13/2019"
+output: 
+  beamer_presentation:
+    colortheme: "seahorse"
+    slide_level: 2
+    includes:
+      in_header: header.tex
+bibliography: nonparamterics.bib
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.width = 5, fig.height = 5, fig.align="center",message=FALSE, warning=FALSE, out.width = '70%')
+```
+
+#  Recall
+
+##
+- One sample sign test, Wilcoxon signed rank test, large-sample approximation, median, Hodges-Lehman estimator, distribution-free confidence interval.
+- Jackknife for bias and standard error of an estimator.
+- Bootstrap samples, bootstrap replicates.
+- Bootstrap standard error of an estimator.
+- Bootstrap percentile confidence interval.
+- Hypothesis testing with the bootstrap (one-sample problem.)
+- Assessing the error in bootstrap estimates.
+- Example: inference on ratio of heart attack rates in the aspirin-intake group to the placebo group.
+- The exhaustive bootstrap distribution.
+
+
+##
+- Discrete data problems (one-sample, two-sample proportion tests, test of homogeneity, test of independence).
+- Two-sample problems (location problem - equal variance, unequal variance, exact test or Monte Carlo, large-sample approximation, H-L estimator, dispersion problem, general distribution).
+- Permutation tests (permutation test for continuous data, different test statistic, accuracy of permutation tests).
+- Permutation tests (discrete data problems, exchangeability.)
+- Rank-based correlation analysis (Kendall and Spearman correlation coefficients.)
+- Rank-based regression (straight line, multiple linear regression, statistical inference about the unknown parameters, nonparametric procedures - does not depend on the distribution of error term.)
+- Smoothing (density estimation, bias-variance trade-off, curse of dimensionality)
+- Nonparametric regression (Local averaging, local regression, kernel smoothing, local polynomial, penalized regression)
+
+## 
+- Cross-validation, Variance Estimation, Confidence Bands, Bootstrap Confidence Bands.
+- Wavelets (wavelet representation of a function, coefficient estimation using Discrete wavelet transformation, thresholding - VishuShrink and SureShrink).
+ 
+
+# ANOVA (Analysis of variance)
+
+## Overview
+
+- Decomposing total variance in the observed data into variability explained by treatment, block, error (considering the experimental design).
+
+# The One-Way Layout
+
+## The One-Way Layout
+- Primary interest is about the relative locations (medians) of three or more populations ($k$ populations).
+- Data: random samples from each of $k$ population.
+        \begin{table}
+        \centering
+        \begin{tabular}{l l l l}
+        \multicolumn{4}{c}{Treatments}\\
+        \hline
+        1 & 2 & $\cdots$ & k \\
+        \hline
+        $X_{11}$ & $X_{12}$ & $\cdots$ &  $X_{1k}$\\
+        $X_{21}$ & $X_{22}$ & $\cdots$ &  $X_{2k}$\\
+        $\vdots$ & $\vdots$ &  &  $\vdots$\\
+        
+        $X_{n_{1}1}$ & $X_{n_{2}2}$ & $\cdots$ &  $X_{n_{k}k}$\\
+        \hline
+        \end{tabular}
+        \end{table}
+        
+- $N = n_{1}+n_{2}+ \cdots + n_{k}$.
+
+## The One-Way Layout
+- Factor $A$ has $k$ levels/treatments.
+- Complete randomized design: $N$ subjects are randomly assigned to $k$ different treatments.
+- Let $n_{j}$ subjects randomly assigned to $j$-th treatment $j = 1, 2, \cdots, k$.
+- Let $X_{ij}$ be the $i$-th response in $j$-th treatment. 
+- Assumptions:
+    - $N$ random variables $\lbrace X_{1j}, X_{2j}, \cdots, X_{n_{j}j}\rbrace , j = 1, 2, \cdots, k$ are mutually independent.
+    - $\lbrace X_{1j}, X_{2j}, \cdots, X_{n_{j}j}\rbrace \sim F_{j},$ $F_{j}$ is continuous.
+    - $F_{j}\left(t\right) = F\left(t - \tau_{j}\right)$ for $j = 1, 2, \cdots, k,$ where $F$ is a distribution function for a continuous distribution with unknown median $\theta$ and $\tau_{j}$ is the unknown treatment effect for the $j$-th population.
+
+## The One-Way Layout
+- The one-way layout model $$X_{ij} = \theta + \tau_{j} + e_{ij}, i=1,2 \cdots, n_{j} \hspace{.1in} \text{and} \hspace{.1in} j = 1, 2, \cdots, k,$$ 
+    - $\theta$ - overall median,
+    - $\tau_{j}$ is the treatment effect,
+    - $N$ $\ve$'s from a random sample from a continuous distribution with median 0.
+
+# General Alternatives
+
+## General alternatives (KRUSKAL–WALLIS)
+- $\text{H}_{0}: \left[\tau_{1} = \tau_{2} = \cdots = \tau_{k}  \right]$ versus $\text{H}_{A}: \left[\tau_{1},\tau_{2} ,\cdots,  \tau_{k} \hspace{.1in} \text{not all equal}\right]$.
+- Test Statistic $$H = \dfrac{12}{N(N+1)}\sum_{j=1}^{k}n_{j}\left(R_{.j} - \dfrac{N+1}{2} \right)^{2},$$ where $R_{.j} = \dfrac{R_{j}}{n}$ and $R_{j} = \sum_{i=1}^{n}r_{ij}$, sum of the ranks in treatment $j$.
+    - Motivation:
+        - Under $\text{H}_{0}$, $F_{1} = F_{2} = \cdots = F_{k} = F$.
+        - Combine $k$ samples and rank. 
+        - Let $r_{ij}$ denote the rank of $X_{ij}$ in this joint ranking.
+        - $\E \left( R_{.j} \right) = \dfrac{N+1}{2}$.
+        - If $\text{H}_{A}$ is true $R_{.j}$ would be larger than $\dfrac{N+1}{2}$ and $H$ is expected to be large.
+        
+- Distribution of $H$ under $\text{H}_{0}$ can be computed using permutation method.
+
+
+## Large-sample approximation
+
+- As $\text{min}\lbrace n_{1}, n_{2}, \cdots, n_{k} \rbrace$ goes to $\infty$, $$H \sim \chi^{2}_{k-1}.$$
+
+## Ties
+
+- Modification needed.
+    - Small-sample procedure is only approximately of the significance level $\alpha$ in the presence of tied $X$ observations.
+
+
+## Example 6.1 (Half-Time of Mucociliary Clearance)
+
+- Assess mucociliary efficiency from the rate of removal of dust in the three groups:
+    - normal subjects,
+    - subjects with obstructive airway disease, and
+    - subjects with asbestosis.
+- Responses - half-times mucociliary clearance of the subjects.
+
+
+## Example 6.1 (Half-Time of Mucociliary Clearance)
+
+```{r}
+normal = c(2.9, 3.0, 2.5, 2.6, 3.2)
+obstruct = c(3.8, 2.7, 4.0, 2.4)
+asbestosis = c(2.8, 3.4, 3.7, 2.2, 2.0)
+x = c(normal,obstruct,asbestosis)
+treatment = c(rep(1,length(normal)), 
+  rep(2,length(obstruct)),
+  rep(3,length(asbestosis)))
+
+KW = kruskal.test(x, treatment)
+```
+
+## Example 6.1 (Half-Time of Mucociliary Clearance)
+```{r}
+KW$statistic
+```
+
+```{r}
+KW$p.value
+```
+
+# Other alternatives
+
+## Ordered alternatives
+
+- Interest in testing increasing treatment effect (according to natural labeling of the treatments).
+    - treatments corresponding to degrees of knowledge of performance.
+    - treatments corresponding to degrees of drug dosage levels, etc.
+- $\text{H}_{A}: \left[\tau_{1} \leq \tau_{2} \cdots \leq  \tau_{k} \hspace{.1in} \text{with at least one strict inequality}\right]$.
+- Use JONCKHEERE–TERPSTRA test statistic.
+    - Use $k(k-1)/2$ Mann–Whitney counts.
+    
+## Umbrella alternatives
+- Interest in testing umbrella alternative treatment effect (said to have a peak at treatment population $p$).
+    - reaction to increasing drug dosage levels where a downturn in effect may occur after the optimal dosage is exceeded.
+    - effect of age on responses to certain stimuli.
+- $\text{H}_{A}: \left[\tau_{1} \leq \tau_{2} \cdots \leq \tau_{p-1} \leq \tau_{p} \geq \tau_{p+1} \cdots \geq  \tau_{k} \hspace{.1in} \text{with at least one strict inequality for some} \hspace{.1in} p \in \lbrace 1, 2 \cdots, k \rbrace \right]$.
+- Use MACK–WOLFE test statistic.
+    - Use $p(p-1)/2$ Mann–Whitney counts for every pair of treatments with labels less than or equal to the hypothesized peak.
+- Test is available for umbrella alternatives with unknown peak.
+
+## Test for treatments versus a control 
+- One of the treatments belongs to baseline set of conditions or control.
+- Interest in testing which of the treatments are better than control.
+- $\text{H}_{0}: \left[\tau_{i} = \tau_{1}, i = 2, \cdots, k  \right]$ versus $\text{H}_{A}: \left[\tau_{i} \geq \tau_{1}, i = 2, \cdots, k, \hspace{.1in} \text{with at least one strict inequality} \right]$.
+- Use FLIGNER–WOLFE test statistic (FW).
+    - Combine sample and rank.
+    - FW is the sum of ranks in noncontrol treatments.
+
+<!-- ## Example -->
+<!-- - Motivational Effect of Knowledge of Performance -->
+<!--     -  the no information category clearly serves as a control population. -->
+<!--     - test if additional performance information of either type (rough or accurate) leads to improved performance as measured by an increase in the number of pieces processed. -->
+<!--     - in notation we will $\tau_{2} > \tau_{1}$ and/or $\tau_{3} > \tau_{1}$ -->
+```{r eval=FALSE, include=FALSE}
+library(coin)
+Table6.6 = data.frame(control = c(40,35,38,43,44,41), 
+  groupB = c(38, 40, 47, 44, 40, 42), 
+  groupC = c(48, 40, 45, 43, 46, 44))
+Table6.6.long = gather(Table6.6, key = "Group")
+Table6.6.long = mutate(Table6.6.long, Group = ifelse(Group == "control", 1, ifelse(Group == "groupB", 2, 3)))
+Table6.6.long.sub = filter(Table6.6.long, Group %in% c(2,3))
+Table6.6.long.sub$Group  = factor(Table6.6.long.sub$Group)
+wilcox.test(Table6.6.long.sub$value ~ Table6.6.long.sub$Group)
+library(NSM3)
+pJCK(Table6.6.long$value, Table6.6.long$Group)
+```
+
+
+## Notes
+- With all the above alternative hypotheses, we can consider $k$-Sample Behrens–Fisher Problem.
+    - permit the possibility of differences in scale parameters as well as medians within the common $F$.
+- Rationale for multiple comparison procedure
+    - Upon rejection of $\text{H}_{0}$, test about specific pairs of treatment effects $\tau_{1}, \cdots, \tau_{k}$.
+    
+## Multiple comparison procedure
+- Consider a collection of hypothesis test $\text{H}_{0}^{(1)}, \text{H}_{0}^{(2)}, \text{H}_{0}^{(3)}, \cdots, \text{H}_{0}^{(s)}$.
+- Individual type I error rate  $\alpha_{I}$.
+    - $\alpha_{I}=$ Type I error rate for each test conducted as if $H$ were alone.
+- Experiment-wise type I error rate $\alpha_{E}$.
+    - $\alpha_{E} = P\left( \text{Type I error on at least one test}\right)$.
+
+## Multiple comparison procedure
+- If the tests in the multiple comparison procedure are independent
+
+    \begin{equation}
+    \begin{split}
+    \alpha_{E} =& P\left( \text{Type I error on at least one test}\right)\\
+    & = 1- P\left( \text{No Type I errors}\right)\\
+    & = 1- \left(1- \alpha_{I} \right)^{s}
+    \end{split}
+    \end{equation}
+- Thus, $$\alpha_{I}  = 1 - \left(1- \alpha_{E}\right)^{1/s}.$$
+
+## Multiple comparison procedure
+
+- Bonferroni correction/adjustment
+    - $\alpha_{s} = \dfrac{\alpha_{E}}{s}$.
+    - Apply regardless whether test are independent or not.
+    - Conservative.
+- Holm procedure (modification to Bonferroni)
+    - Calculate p-values for each hypothesis test.
+    - Order the p-values from smallest to largest.
+        - Compare smallest p-value to $\dfrac{\alpha_{E}}{s}$.
+        - Compare next smallest p-value to $\dfrac{\alpha_{E}}{s-1}$.
+        - Compare largest p-value to $\dfrac{\alpha_{E}}{1}$
+    - Do the above procedure until we fail to reject one of $\text{H}_{0}^{(i)}$.
+    
+## Contrast 
+- A contrast is $C  = a_{1}\tau_{1} + a_{2}\tau_{2} + \cdots + a_{k}\tau_{k}$ such that $\sum_{j=1}^{k}a_{j} = 0.$
+- If we consider $k$ treatment effects, $\tau_{1}, \tau_{2}, \cdots, \tau_{k}$:
+    - $\text{H}_{0}^{1}: \tau_{1} = \tau_{2}$, $\text{H}_{0}^{2}: \tau_{2} = \tau_{3}$, $\cdots$, $\text{H}_{0}^{k(k-1)/2}: \tau_{k-1} = \tau_{k}$.
+    
+## Testing k(k-1)/2 (contrast) pairs of treatment effects
+
+- To make decisions about individual differences between pairs of treatment effects $\left(\tau_{i}, \tau_{j} \right)$ for $i < j.$
+- Do multiple hypotheses procedure, after rejection of $\text{H}_{0}$ with the Kruskal–Wallis procedure.
+- $\text{H}_{0}: \tau_{j} = \tau_{l}$ versus $\text{H}_{A}: \tau_{j} \neq \tau_{l},$ $j \neq l = 1, 2, \cdots, k.$
+    - Test statistic: For each pair of treatments $\left(i,j \right)$,$$W_{ij} = \sum_{j = 1}^{n_{j}}R_{ij}, 1 \leq i < j \leq k.$$
+    - Wilcoxon rank sum test.
+    - We will use p-value approach to make decision.
+
+## Multiple comparison procedure (Example)
+- Length of YOY Gizzard Shad from Kokosing Lake, Ohio, Sampled in Summer, 1984 (mm).
+- Let $\alpha = .01$.
+```{r}
+num.of.contrasts = 4*(4-1)/2;num.of.contrasts
+library(NSM3)
+data(gizzards)
+grp = factor(c(rep("I", length(gizzards[[1]])), 
+  rep("II", length(gizzards[[2]])), 
+  rep("III", length(gizzards[[3]])), 
+  rep("IV", length(gizzards[[4]]))))
+leng = as.numeric(unlist(gizzards))
+```
+
+## Multiple comparison procedure (Example)
+```{r}
+kw.test  = kruskal.test(leng, grp)
+kw.test$p.value
+```
+
+- We reject the null hypothesis at .01 significance level and conclude that the length of YOY Gizzard Shad is different in at least two sites of the river. 
+
+## Multiple comparison procedure (Example)
+- Experimentwise error rate  $\alpha = .01.$
+```{r}
+p.value12 = wilcox.test(gizzards[[1]], 
+  gizzards[[2]])$p.value
+p.value13 = wilcox.test(gizzards[[1]], 
+  gizzards[[3]])$p.value
+p.value14 = wilcox.test(gizzards[[1]], 
+  gizzards[[4]])$p.value
+p.value23 = wilcox.test(gizzards[[2]], 
+  gizzards[[3]])$p.value
+p.value24 = wilcox.test(gizzards[[2]], 
+  gizzards[[4]])$p.value
+p.value34 = wilcox.test(gizzards[[3]], 
+  gizzards[[4]])$p.value
+```
+
+
+## Multiple comparison procedure (Example)
+
+```{r}
+round(c(p.value12, p.value13, 
+  p.value14, p.value23, 
+  p.value24, p.value34), digits = 3)
+```
+
+- Bonferroni correction to p-values (multiply each p-value by number of contrasts and set the p-value more than one to one.)
+```{r}
+round(p.adjust(c(p.value12, p.value13, 
+  p.value14, p.value23, 
+  p.value24, p.value34), 
+  method = "bonferroni"),digits = 3)
+```
+
+At an experimentwise error rate of .01, the six multiple comparison decisions can be summarized by the statement $\left(\tau_{1} =\tau_{2} \right) \neq \left(\tau_{3} =\tau_{4} \right)$ 
+)
+
+## Multiple comparison procedure (Example)
+- Holm procedure.
+```{r}
+round(p.adjust(c(p.value12, p.value13, 
+  p.value14, p.value23, 
+  p.value24, p.value34), 
+  method = "holm"), digits = 3)
+```
+We reach the same conclusion using Holm multiple comparison adjustment procedure.
+
+
+##  References for this lecture
+
+
+**HWC** Chapter 6 
+
+<!-- Homework 7, Page 212, Problem 1: -->
+<!-- Pretherapy training of clients has been shown to have beneficial effects on the process and outcome of counseling and psychotherapy. Sauber (1971) investigated four different approaches to pretherapy training: -->
+<!-- 1. Control (no treatment). -->
+<!-- 2. Therapeutic reading (TR) (indirect learning). -->
+<!-- 3. Vicarious therapy pretraining (VTP) (videotaped, vicarious learning). 4. Group, role induction interview (RII) (direct learning). -->
+<!-- Treatment conditions 2–4 were expected to enhance the outcome of counseling and psychotherapy as compared with a control group, those subjects receiving no prior set of structuring procedures. One of the major variables of the study was that of “psychotherapeutic attraction.” The basic data in **Table 6.2** consist of the raw scores for this measure according to each of the four experimental conditions. Apply procedure large-sample approximation of Kruskal-Wallis test. -->
+
+<!-- Homework 7, Page 265, Problem 47: -->
+<!-- Apply the multiple comparison procedure to the psychotherapeutic attraction data of Table 6.2. -->
+

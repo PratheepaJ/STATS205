@@ -1,0 +1,285 @@
+---
+title: "Lecture 4: Statistical functionals and Influence functions"
+shorttitle: "STATS 205 Lecture 4"
+author: "Pratheepa Jeganathan"
+date: "04/10/2019"
+output: 
+  beamer_presentation:
+    colortheme: "seahorse"
+    slide_level: 2
+    includes:
+      in_header: header.tex
+bibliography: nonparamterics.bib
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.width = 3,fig.height = 3,message=FALSE, warning=FALSE)
+```
+
+
+# Robustness
+
+## Properties of estimators
+
+- Measures of robustness
+    - efficiency
+    - influence
+    - breakdown 
+- Asymptotic relative efficiency **HWC** Chapter 3.11
+
+- Consider influence and breakdown
+
+
+##  Sensitivity to gross errors
+
+- Sensitivity curve: function of observations.
+- Let $\vz_{n} = \left(z_{1}, \cdots, z_{n}\right)^{T}$ drawn from cdf $F$ and $\theta$ is the location parameter.
+- Let $\hat{\theta}$ is an estimator of $\theta$.
+- Add an outlier observation $z$ to $\vz_{n}$, $\vz_{n+1} = \left(z_{1}, \cdots, z_{n}, z\right)^{T}$.
+- The sensitivity curve of an estimator $\hat{\theta}$ is
+\begin{equation}
+S\left(z; \hat{\theta}\right) = \dfrac{\hat{\theta}_{n+1} - \hat{\theta}_{n}}{1/(n+1)}.
+\end{equation}
+
+## Sensitivity to gross errors (examples)
+
+```{r}
+z_n = c(1.85, 2.35, -3.85, -5.25, -0.15, 
+  2.15, 0.15, -0.25, -0.55, 2.65)
+mean(z_n)
+```
+```{r}
+median(z_n)
+```
+
+```{r}
+library(ICSNP)
+hl.loc(z_n)
+```
+
+## Example (Sensitivity curve for mean)
+```{r}
+z_n_plus_1_df = data.frame(z_n_plus_1 = seq(-20, 20, 
+  by = 1))
+
+sensitivity <- function(theta_n_plus_1, theta_n, n){
+  (theta_n_plus_1- theta_n)*(n+1)
+}
+
+mean_z_n_plus_1 = apply(z_n_plus_1_df, 1, function(x){
+  x = c(z_n,x)
+  mean(x)
+})
+
+sensitivity_mean = sensitivity(mean_z_n_plus_1, 
+  mean(z_n), length(z_n))
+```
+
+## Example (Sensitivity curve for median)
+
+```{r}
+median_z_n_plus_1 = apply(z_n_plus_1_df, 1, function(x){
+  x = c(z_n,x)
+  median(x)
+})
+
+sensitivity_median = sensitivity(median_z_n_plus_1, 
+  mean(z_n), length(z_n))
+```
+
+## Example (Sensitivity curve for HL)
+
+```{r}
+HL_z_n_plus_1 = apply(z_n_plus_1_df, 1, function(x){
+  x = c(z_n,x)
+  hl.loc(x)
+})
+sensitivity_HL = sensitivity(HL_z_n_plus_1, 
+  mean(z_n), length(z_n))
+```
+
+## Example (Sensitivity curve)
+
+```{r fig.show = 'hide'}
+library(tidyr)
+library(ggplot2)
+df = data.frame(z_n_plus_1 = z_n_plus_1_df$z_n_plus_1, 
+  sensitivity_mean = sensitivity_mean, 
+  sensitivity_median = sensitivity_median, 
+  sensitivity_HL = sensitivity_HL)
+df_long = gather(df, key = "estimator", 
+  value = "value", -z_n_plus_1)
+df_long$estimator = factor(df_long$estimator)
+ggplot(data = df_long) + 
+  geom_line(aes(x = z_n_plus_1, 
+    y = value, group =estimator, color = estimator)) + 
+  xlab(bquote(z[n+1]))+ 
+  scale_color_discrete(name = "Estimator", 
+    labels = c("HL", "Mean", "Median")) + ylab(bquote(S(z[n+1],hat(theta))))
+```
+
+## Example (Sensitivity curve)
+
+- Mean: unbounded.
+- Median and Hodges–Lehmann: bounded.
+```{r echo=FALSE, fig.width=5.5}
+ggplot(data = df_long) + 
+  geom_line(aes(x = z_n_plus_1, 
+    y = value, group =estimator, color = estimator)) + 
+  xlab(bquote(z[n+1]))+ 
+  scale_color_discrete(name = "Estimator", 
+    labels = c("HL", "Mean", "Median")) + ylab(bquote(S(z[n+1],hat(theta))))
+```
+
+
+## Statistical functionals
+
+- Statistical inference involves estimating some aspects of a cdf $F$ on the basis of a random sample drawn from $F$.
+- Statistical functional $T\left(F\right)$: any function of $F$.
+    - Let $Z_{1}, \cdots, Z_{n} \sim F$, where $F\left(z\right) = P\left(Z \leq z\right)$, define $\theta = T\left(F\right)$. 
+- Examples:
+    - Mean: $T\left(F\right) = \int z dF\left(z\right)$.
+    - Median: $T\left(F\right) = F^{-1}\left(1/2\right)$.
+    - HL: $T\left(F\right) = (1/2)\lbrace F * F \rbrace^{-1}(1/2),$ where $*$ denotes convolution.
+
+
+##  Estimating statistical functionals
+
+- Estimator of $F$: empirical CDF $\hat{F}\left(z\right) = \dfrac{\#\lbrace z_{i} \leq z\rbrace}{n}$.
+- Plug-in principal: plug-in estimator of $T\left(F\right)$ is $T\left(\hat{F}\right)$ - (summary statistic).
+- Plug-in principal is good when there is information about $F$ only through sample $\vz$ (not from the model). 
+
+
+## Influence functions
+
+- Influence function
+    
+    - Measures rate of change of $T\left(F\right)$ under small contamination at $z$ (kind of derivative).
+    - Indicates statistical accuracy of a statistic (if influence function is bounded - robustness).
+    - Useful for computing the approximate standard error of plug-in estimate $T\left(\hat{F}\right)$ (standard deviation of a summary statistic).
+- Gateaux derivative of $T$ at $F$ in the direction $G$
+    \begin{equation}
+    L\left(G\right) = \lim_{\epsilon \rightarrow 0} \dfrac{T\left( (1-\epsilon)F + \epsilon G\right) - T\left(F\right)}{\epsilon}
+    \end{equation}
+    
+## Influence functions
+- If $G = \delta_{z}$ is a point mass at $z$
+     \begin{equation}
+    L\left(z\right) = \lim_{\epsilon \rightarrow 0} \dfrac{T\left( (1-\epsilon)F + \epsilon \delta_{z}\right) - T\left(F\right)}{\epsilon}.
+    \end{equation}
+- $L\left(z\right)$ is the influence function.
+    
+- Empirical influence function/plug-in estimator for $L\left( z\right)$
+    \begin{equation}
+    \hat{L}\left(z\right) = \lim_{\epsilon \rightarrow 0} \dfrac{T\left( (1-\epsilon)\hat{F} + \epsilon \delta_{z}\right) - T\left(\hat{F}\right)}{\epsilon}.
+    \end{equation}
+    
+## Examples (influence functions)
+
+- The influence function for our estimators are (up to constant of proportionality and center)
+    - Mean: $z$
+    - Median: $\text{sign}\left(z\right)$
+    - HL: $F\left(z\right) - .5$
+    
+- Mean is not robust, but median and HL are robust
+
+## Example (influence curves)
+```{r}
+influence_mean = z_n
+influence_median = sign(z_n)
+z_n_df = data.frame(z_n = z_n)
+influence_HL = apply(z_n_df, 1, function(x){
+  mean(z_n <= x) -.5
+})
+```
+
+## Example (influence curves)
+```{r fig.show='hide'}
+df_inf = data.frame(z = z_n, 
+  influence_mean = influence_mean, 
+  influence_median = influence_median, 
+  influence_HL = influence_HL)
+df_inf_long = gather(df_inf, key = "estimator", 
+  value = "value", -z)
+df_inf_long$estimator = factor(df_inf_long$estimator)
+ggplot(data = df_inf_long) + 
+  geom_line(aes(x = z, 
+    y = value, group =estimator, color = estimator)) + 
+  xlab("z")+ 
+  scale_color_discrete(name = "Estimator", 
+    labels = c("HL", "Mean", "Median")) +
+  ylab("L(z)")
+```
+
+## Example (influence curves)
+```{r echo=FALSE, fig.width=5.5}
+ggplot(data = df_inf_long) + 
+  geom_line(aes(x = z, 
+    y = value, group =estimator, color = estimator)) + 
+  xlab("z")+ 
+  scale_color_discrete(name = "Estimator", 
+    labels = c("HL", "Mean", "Median")) +
+  ylab("L(z)")
+```
+
+## Standard error of a plug-in estimator
+
+- If $T\left(F\right) = \int a\left(z\right) dF\left(z\right)$, a linear functional 
+    - $L\left( z\right) = a\left(z\right) - T\left(F\right)$. 
+    - $\E \left(L\left( z\right) \right) = 0$.
+    - $\tau^{2} = \int L\left( z\right)^2 dF\left(z\right) = \int \left(a\left(z\right) - T\left(F\right) \right)^{2} dF\left(z\right)$.
+    - $\hat{\tau}^{2} = \dfrac{1}{n}\sum_{i=1}^{n} \left(a\left(Z_{i}\right) - T\left(\hat{F}\right) \right)^{2}$.
+    - $\text{se}^{2}\left(T\left(\hat{F}\right) \right) = \dfrac{\hat{\tau}^{2}}{n}$.
+
+## Example (Standard error of a plug-in estimator)
+
+- $\theta = T\left(F\right)  = \int z dF\left(z\right)$.
+- $\hat{\theta} = T\left(\hat{F}\right) = \int z d\hat{F}\left(z\right) = \dfrac{\sum_{i=1}^{n} Z_{i}}{n} = \bar{Z}$.
+- $L\left(z\right) = z - \int z dF\left(z\right)$.
+- $\hat{L}\left( z\right) = z - \bar{Z}$.
+- $\text{se}^{2}\left(T\left(\hat{F}\right) \right) = \dfrac{n^{-1}\sum_{i=1}^{n} \left(Z_{i} -\bar{Z} \right)^{2}}{n}$.
+
+## Breakdown point of an estimator
+
+- Reference: Following notes from this [link](http://www.stat.umn.edu/geyer/5601/notes/break.pdf).
+
+- Suppose we contaminate $n-m$ points in our sample
+  $$z_{n}^{*} = \left(z_{1}, \cdots, z_{m},z_{m+1}^{*}, \cdots, z_{n}^{*} \right)$$.
+
+- Consider $z_{m+1}^{*}, \cdots, z_{n}^{*}$ are very large $(\text{close to} \hspace{.1in} \infty)$.
+
+- Breakdown point: the smallest value $n-m$ so that $\hat{\theta}\left( z_{n}^{*}\right)$ is bad.
+
+- Finite sample breakdown point : a function of sample size $\dfrac{n-m}{n}$. 
+
+- Asymptotic breakdown point: (single number) the limit of the finite sample breakdown point as $n \to \infty$.
+
+
+## Examples (breakdown point)
+
+- Sample mean
+    - Finite sample BP: $\dfrac{1}{n}$.
+    - Asymptotic BP: 0.
+- Sample median
+    - Finite sample BP: $\left[\dfrac{n-1}{2n}\right]$, $\left[u\right]$ is the largest integer less than or equal to $u$.
+    - Asymptotic BP: .5.
+- HL
+    - Finite sample BP: [Read this notes](http://www.stat.umn.edu/geyer/5601/notes/break.pdf).
+    - Asymptotic BP: $\approx 0.29$.
+
+# References
+
+##  References for this lecture
+
+
+**W** Chapter 2 (Statistical functionals and influence functions)
+
+**ET** Chapter 4, 5, 21.3 (Statistical functionals and influence functions)
+
+**KM** Chapter 3.5 (R codes for sensitivity, breakdown, influence)
+
+**HWC** Chapter 3.2 page 57, comment 16 (sensitivity to gross errors- HL)
+
+**HWC** Chapter 3.5 page 77, comment 40 (sensitivity to gross errors- median)
+

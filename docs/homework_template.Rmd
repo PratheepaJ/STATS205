@@ -1,0 +1,22 @@
+---
+title: 'STATS 205: Homework Assignment 1'
+author: "Pratheepa Jeganathan"
+date: "3/29/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##  Solution 1
+
+Explain your solution: 
+Model $X = \theta + \epsilon$
+
+```{r}
+data(rhythmicity)
+d <- rhythmicity
+wilcox.test(x=d)
+```
+
