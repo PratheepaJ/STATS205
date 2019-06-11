@@ -1,0 +1,423 @@
+---
+title: "Lecture 14: Smoothing"
+shorttitle: "STATS 205 Lecture 14"
+author: "Pratheepa Jeganathan"
+date: "05/03/2019"
+output: 
+  beamer_presentation:
+    colortheme: "seahorse"
+    slide_level: 2
+    includes:
+      in_header: header.tex
+bibliography: nonparamterics.bib
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.width = 5, fig.height = 5, fig.align="center",message=FALSE, warning=FALSE, out.width = '70%')
+```
+
+#  Recall
+
+##
+- One sample sign test, Wilcoxon signed rank test, large-sample approximation, median, Hodges-Lehman estimator, distribution-free confidence interval.
+- Jackknife for bias and standard error of an estimator.
+- Bootstrap samples, bootstrap replicates.
+- Bootstrap standard error of an estimator.
+- Bootstrap percentile confidence interval.
+- Hypothesis testing with the bootstrap (one-sample problem.)
+- Assessing the error in bootstrap estimates.
+- Example: inference on ratio of heart attack rates in the aspirin-intake group to the placebo group.
+- The exhaustive bootstrap distribution.
+
+
+##
+- Discrete data problems (one-sample, two-sample proportion tests, test of homogeneity, test of independence).
+- Two-sample problems (location problem - equal variance, unequal variance, exact test or Monte Carlo, large-sample approximation, H-L estimator, dispersion problem, general distribution).
+- Permutation tests (permutation test for continuous data, different test statistic, accuracy of permutation tests).
+- Permutation tests (discrete data problems, exchangeability.)
+- Rank-based correlation analysis (Kendall and Spearman correlation coefficients.)
+- Rank-based regression (straight line, multiple linear regression, statistical inference about the unknown parameters, nonparametric procedures - does not depend on the distribution of error term.)
+
+# Smoothing
+
+## Introduction
+
+- Smoothing or estimating curves.
+    - Density estimation.
+    - Nonparametric regression.
+    
+# Density estimation
+
+## Introduction
+
+- A curve of interest can be a probability density function $f$.
+- $X_{1}, X_{2}, \cdots, X_{n}$ are a random sample from a continuous population with cumulative distribution function $F$ and density function $f$.
+- Goal is to estimate $f$.
+
+## Empirical cumulative distribution function
+
+- A study examining the relation between student mathematical performance and their preference for solving problem using average of four test scores.
+
+```{r}
+library(NSM3)
+data(discrepancy.scores)
+discrepancy.scores = discrepancy.scores
+```
+
+## Empirical cumulative distribution function
+```{r fig.show='hide'}
+plot(ecdf(discrepancy.scores), 
+  main = "The empirical cdf for spatial ability score")
+```
+##
+```{r echo=FALSE}
+plot(ecdf(discrepancy.scores), 
+  main = "The empirical cdf for spatial ability score")
+```
+
+## Histogram (density estimation)
+- Let $c_{j}, j = 1, \cdots, m$ centering points, $I_{j} = \left(c_{j} - h/2, c_{j}+h/2\right]$ overlapping intervals, where $h$ is width of the interval.
+
+$$\hat{f}\left(x\right) = \dfrac{\# \hspace{.1in} \text{of}\hspace{.1in} X_{i} \hspace{.1in}\text{in}\hspace{.1in} I_{j}}{nh}.$$
+
+- Bin-width $h = 2 \cdot\text{IQR}\cdot n^{-1/3}$ Freedman and Diaconis (1981)
+
+## Histogram
+```{r fig.show='hide'}
+hist(discrepancy.scores, 
+  freq = FALSE, breaks = "FD")
+```
+
+##
+```{r echo=FALSE}
+hist(discrepancy.scores, 
+  freq = FALSE, breaks = "FD")
+```
+
+##
+```{r fig.show='hide'}
+library(ggplot2)
+cal.binwidth = function(x){
+  2*(as.numeric(quantile(x, probs = .75)) - as.numeric(quantile(x, probs = .25)))*(length(x))^(-1/3)
+}
+binwidth = round(cal.binwidth(discrepancy.scores), digits = 3)
+
+ggplot(data = data.frame(scores = discrepancy.scores), 
+  aes(x = scores)) +
+  geom_histogram(binwidth = binwidth, stat = "bin", 
+    fill = "white", color = "black") 
+```
+
+##
+```{r echo=FALSE}
+ggplot(data = data.frame(scores = discrepancy.scores), 
+  aes(x = scores)) +
+  geom_histogram(binwidth = binwidth, stat = "bin", 
+    fill = "white", color = "black") 
+```
+
+##
+```{r fig.show='hide'}
+ggplot(data = data.frame(scores = discrepancy.scores), 
+  aes(x = scores)) +
+  geom_histogram(aes(y = ..density..),
+    binwidth = binwidth, stat = "bin", 
+    fill = "white", color = "black")  +
+  geom_density(alpha=.2, fill="#FF6666")
+```
+
+##
+```{r echo=FALSE}
+ggplot(data = data.frame(scores = discrepancy.scores), 
+  aes(x = scores)) +
+  geom_histogram(aes(y = ..density..), 
+    binwidth = binwidth, stat = "bin", 
+    fill = "white", color = "black")  +
+  geom_density(alpha=.2, fill="#FF6666")
+```
+
+## Kernel density estimation
+
+- Kernel $K$ is a function such that
+    - $K\left(x \right) \geq 0, - \infty < x < \infty$.
+    - $K\left(x \right) = K\left(-x \right)$.
+    - $\int_{- \infty}^{\infty} K\left(x \right)dx = 1$.
+
+- $$\hat{f}\left( x\right) = \dfrac{1}{nh} \sum_{i=1}^{n}K \left(\dfrac{x - X_{i}}{h} \right),$$
+
+where $h$ is bandwidth.
+
+##
+- kernel = "r" specifies the rectangular kernel.
+
+```{r}
+density(discrepancy.scores, 
+  kernel="r", bw=1/(4 * sqrt(3)), n=2^(14))
+```
+
+##
+```{r}
+plot(density(discrepancy.scores, 
+  kernel="r", bw=1/(4 * sqrt(3)), n=2^(14)))
+```
+
+## Change the bandwitdh of the Kernel
+
+```{r}
+plot(density(discrepancy.scores, 
+  kernel="r", bw="nrd", n=2^(14)))
+```
+
+# Nonparametric regression
+
+## Introduction
+
+- Follow notation in **W(2006)** Chapter 4 and 5.
+- There are $n$ pairs of observations $\left(x_{1}, Y_{1} \right), \left(x_{2}, Y_{2} \right), \cdots, \left(x_{n}, Y_{n} \right)$.
+- Regression is $Y_{i} = r\left( x_{i}\right) + \epsilon_{i},$ where $\E \left( \epsilon_{i}\right) = 0$.
+- A curve of interest is the regression function $r$.
+
+## Nonparametric regression
+
+- Example 14.2 (Page 662) Nitrogen Oxide Concentrations
+    - Brinkman (1981) collected data on the nitrogen oxide concentrations ($\vY$) found in engine exhaust for ethanol engines with various equivalence ratios ($\vx$).
+
+## Nonparametric regression
+```{r echo=FALSE}
+data("ethanol")
+p = ggplot(ethanol, aes(x = E, y = NOx)) + geom_point()
+print(p)
+```
+
+##
+- locally weighted regression
+```{r echo=FALSE}
+p + stat_smooth(method = "loess", formula = y ~ x, size = 1)
+```
+
+## 
+
+- Include squared term of $E$ in the regression model
+
+```{r echo=FALSE}
+p + stat_smooth(method = "lm", formula = y ~ x + I(x^2), size = 1)
+```
+
+##
+- Regression function with a second order (quadratic) polynomial
+```{r echo=FALSE}
+p + stat_smooth(method = "lm", formula = y ~ poly(x, 2), size = 1)
+```
+
+##
+- generalized additive model (GAM) from the `mgcv` package
+```{r echo=FALSE}
+library(mgcv)
+p + stat_smooth(method = "gam", formula = y ~ s(x), size = 1)
+```
+
+
+##
+- **HWC** Chapter 9.7
+    - Example 1: Running Line Smoother
+    - Example 2: Kernel Regression Smoother.
+    - Example 3: Local Regression Smoother.
+    - Example 4: Spline Regression Smoother. 
+    - Example 5: Wavelet Smoother
+- Determine which approach to choose (HWC Chapter 9.7).
+    - Consider relative importance of minimizing bias versus minimizing variance (and computing cost).
+    - Bias-variance trade-off.
+
+
+## Bias-variance trade-off
+- Let $\hat{f}_{n}\left(x\right)$ be an estimate of a function $f\left(x\right)$.
+- Define the **squared error** or ($L_{2}$) loss function is
+$$L\left(f\left(x\right), \hat{f}_{n}\left(x\right)\right) = \left(f\left(x\right)- \hat{f}_{n}\left(x\right)\right)^{2}.$$
+- Define average of this loss as **risk** or **mean squared error** (MSE)
+
+$$\text{MSE} = R\left(f\left(x\right), \hat{f}_{n}\left(x\right) \right) = \E \left(L\left(f\left(x\right), \hat{f}_{n}\left(x\right)\right) \right).$$
+
+- The random variable in the MSE is $\hat{f}_{n}\left(x\right)$ which implicitly depends on the observed data.
+
+- The MSE can be decomposed into a bias and variance term:
+  $$\text{Risk} =\text{MSE} = \text{Bias}^{2} + \text{Variance}.$$
+
+## Decomposition of MSE
+
+- $\text{Bias} = f\left(x\right) - \E \left(\hat{f}_{n}\left(x\right) \right)$.
+- $Variance  = \E \left(\hat{f}\left(x\right) - \E\left(\hat{f}_{n}\left(x\right) \right) \right)^{2}$.
+
+\begin{equation}
+\notag
+\begin{split}
+  \E \left(f\left(x\right)- \hat{f}_{n}\left(x\right)\right)^{2} = & \E \left( f\left(x\right)   - \E \hat{f}_{n}\left(x\right) + \E \hat{f}_{n}\left(x\right) - \hat{f}_{n}\left(x\right) \right)^{2}\\
+  = & \E \left(f-  \E \hat{f}_{n}\left(x\right) \right)^{2} + \E \left(   \E \hat{f}_{n}\left(x\right) - \hat{f}_{n}\left(x\right)\right)^{2} + \\
+  & 2 \E \left(f-  \E \hat{f}_{n}\left(x\right) \right) \left(\E \hat{f}_{n}\left(x\right)-  \hat{f}_{n}\left(x\right)\right)\\
+  = & \left(\E \hat{f}_{n}\left(x\right) -f\right)^{2} + \E \left(\hat{f}_{n}\left(x\right) - \E \hat{f}_{n}\left(x\right)\right)^{2}.
+\end{split}
+\end{equation}
+
+
+## Bias-variance trade-off
+- Above definitions refer to the risk at point $x$.
+- In density estimation problem, the **integrated risk** or **integrated mean squared error** is
+$$R\left(f,  \hat{f}_{n}\right) = \int R\left(f\left(x\right), \hat{f}_{n}\left(x\right) \right)dx.$$
+- For regression problems, the **integrated MSE** or **average MSE** is
+
+$$R\left(r,  \hat{r}_{n}\right) = \dfrac{1}{n}\sum_{i=1}^{n} R\left(r\left(x_{i}\right), \hat{r}_{n}\left(x_{i}\right) \right).$$
+
+## Bias-variance trade-off
+- Predictive risk
+    - Nonparametric regression model is $Y_{i} = r\left(x_{i} \right) + \epsilon_{i}.$
+    - Suppose we draw a new observation $Y_{i}^{*}= r\left(x_{i}\right) + \epsilon^{*}_{i}$ at each $x_{i}$.
+    - Predict $Y_{i}^{*}$ with $\hat{r}\left(x_{i}\right)$.
+    - **Predictive risk**
+    $$\E \left( \dfrac{1}{n} \sum_{i=1}^{n} \left( Y_{i}^{*} - \hat{r}\left(x_{i}\right) \right)^{2} \right).$$
+- Average risk and predictive risk  
+      - $\text{predictive risk} = R\left(r, \hat{r}_{n} \right) + \sigma^{2},$ where $\sigma^{2}$ is variance of $\epsilon_{i}.$
+    
+## Bias-variance trade-off
+
+- Minimizing risk corresponds to balancing between bias and variance.
+- Smoothing is chosen based on the bias-variance trade-off.
+- Oversmooth data have a large bias term and small variance.
+- Under smooth data have a small bias term and large variance.
+
+
+##
+![Bias-variance trade-off](bias_variance_tradoff)
+
+## Example(Bias-variance trade-off)
+
+- Let $X \sim f\left(x\right)$, where $f$ be a pdf.
+- Consider estimating $f\left(0\right)$.
+- Let $h$ be a small and positive number.
+- Define 
+$$p_{h}:= P\left(-\dfrac{h}{2} <X < \dfrac{h}{2} \right) = \int_{-h/2}^{h/2}f\left(x\right)dx \approx h f\left(0\right).$$
+- Hence $$f\left(0\right) \approx \dfrac{p_{h}}{h}.$$
+
+##
+-  Let $Y$ be the number of observations in the interval $\left(-\dfrac{h}{2}, -\dfrac{h}{2} \right)$.
+    - $Y \sim \text{Binomial} \left(n,p_{h} \right)$.
+- An estimate of $p_{h}$ is $\hat{p}_{h} = \dfrac{Y}{n}$. Thus, an estimate of $f\left(0\right)$ is 
+$$\hat{f}_{n}\left(0\right) = \dfrac{\hat{p}_{h}}{n} = \dfrac{Y}{nh}.$$
+- \rc How do we choose $h$? \bc
+- We will show that for some constant $A$ and $B$, $$\text{MSE}\left(\hat{f}_{n}\left(0\right) \right) \approx Ah^{4}+\dfrac{B}{nh} = \text{Bias}^{2} + \text{Variance}$$.
+    - Then, we can minimize $\text{MSE}\left(\hat{f}_{n}\left(0\right) \right)$ to find the optimal $h$.
+
+##
+- Show that $\text{Bias} = \E \left( \hat{f}_{n}\left(0\right) \right) - f\left( 0\right) \approx \dfrac{f^{''}\left(0\right)h^{2}}{24}.$
+- 
+\begin{equation}
+\label{bias}
+\E \left( \hat{f}_{n}\left(0\right) \right) = \dfrac{\E Y}{nh} = \dfrac{p_{h}}{h}.
+\end{equation}
+
+- Taylor expansion of $f$ at $0$,
+$$f\left(x\right) \approx f\left(0\right) + x f^{'}\left(0\right) + \dfrac{x^{2}}{2}f^{''}\left(0\right).$$
+
+- Plug-in  
+\begin{equation}
+\label{ph}
+\begin{split}
+  p_{h} = & \int_{-h/2}^{h/2}f\left(x\right)dx\\
+  \approx & \int_{-h/2}^{h/2} \left( f\left(0\right) + x f^{'}\left(0\right) + \dfrac{x^{2}}{2}f^{''}\left(0\right)\right)dx\\
+        = & h f\left(0\right) + \dfrac{f^{''}\left(0\right)}{24}h^{3}.
+\end{split}
+\end{equation}
+
+
+##
+- Now plug-in \eqref{ph} to \eqref{bias}
+    - $\E \left( \hat{f}_{n}\left(0\right) \right) \approx f\left(0\right) + \dfrac{f^{''}\left(0\right)}{24}h^{2}.$
+- Thus, $\text{Bias} = \E \left( \hat{f}_{n}\left(0\right) \right) - f\left( 0\right) \approx \dfrac{f^{''}\left(0\right)h^{2}}{24}.$
+- $\V \left( \hat{f}_{n}\left(0\right) \right) = \dfrac{\V \left(Y \right)}{n^{2}h^{2}} = \dfrac{p_{h}\left(1-p_{h}\right)}{nh^{2}}.$
+    - $1-p_{h} \approx 1$ for small $h$.
+    - Thus, $\V \left( \hat{f}_{n}\left(0\right) \right) \approx \dfrac{p_{h}}{nh^{2}}$.
+    - By plug-in \eqref{ph}, we can show that $\V \left( \hat{f}_{n}\left(0\right) \right) \approx \dfrac{f\left(0\right)}{nh}$.
+
+##
+
+- Now $$\text{MSE}\left(\hat{f}_{n}\left(0\right) \right) = \text{Bias}^{2} + \text{Variance}= \left(\dfrac{f^{''}\left(0\right)h^{2}}{24}\right)^{2} +  \dfrac{f\left(0\right)}{nh}= Ah^{4}+\dfrac{B}{nh}.$$
+    
+    - If we smooth less (decrease $h$), bias term decreases and the variance term increases.
+    - If we oversmooth (increase $h$), bias term increases and the variance term decreases.
+
+- We should balance between bias and variance to find the optimal $h$. 
+
+## Choosing other loss functions
+
+- $L_{p}$ loss function
+$$\left\lbrace \int \left| f\left(x\right)-\hat{f}_{n}\left(x\right)\right| \right\rbrace^{1/p}.$$
+- In parametric context (and in machine learning community) - Kullback-Leibler loss
+$$L\left(f, \hat{f}_{n}\right) = \int f\left(x \right) \left(log \dfrac{f\left(x \right)}{\hat{f}_{n}\left(x\right)} \right) dx.$$
+    - This loss function is not appropriate for smoothing problems due to sensitivity in the tails of the distribution (Hall 1987).
+
+## The curse of dimensionality
+- Estimation in smoothing getting harder with dimensionality - curse of dimensionality or computationally expensive.
+- Curse
+    - Computational curse: computational cost increase exponentially with dimension $d$.
+    - Statistical curse of dimensionality: sample size $n$ needs to increase exponentially with dimension $d$.
+- The MSE of any nonparametric estimator of a smooth curve (twice differentiable) has the form 
+$$\text{MSE} \approx \dfrac{c}{n^{4/(4+d)}}.$$
+- If we fixed $\text{MSE} = \delta$ to a small number, then,
+$$ n \propto \left(\dfrac{c}{\delta}\right)^{d/4}$$
+
+which grows exponentially with $d$.
+
+## Why this phenomenon in smoothing?
+
+- Smoothing involves estimating $f\left(x \right)$ using data points in a local neighborhood of $x$.
+    - When $d$ is large (data are sparse), local neighborhood contains very few points.
+    
+
+## (Example) The curse of dimensionality
+- Suppose $n$ data points uniformly distributed on the interval
+$\left[0,1 \right]$.
+    - Number of points in the interval $\left[-.1, .1 \right] \approx \dfrac{n}{10}$ points.
+- Suppose $n$ data points on the 10-dimensional unit cube $\left[0,1 \right]^{10} = \left[0,1 \right] \times \cdots \times \left[0,1 \right].$
+    - Number of data points in the cube $\left[-.1, .1 \right]^{10} \approx n \times \left(\dfrac{.2}{2} \right) = \dfrac{n}{10, 000, 000, 000}.$
+    - $n$ should be large enough to ensure that small neighborhood have any data.
+- Smoothing methods can be used in high-dimensional problems. Due to statistical curse of dimensionality
+    - Estimator may not be accurate.
+    - Confidence interval around the estimate may be large. 
+    - \rc doesn't mean the smoothing method is wrong. \bc
+
+## (Example) The curse of dimensionality
+
+```{r echo=FALSE}
+library(png)
+library(grid)
+img <- readPNG("curse_of_dim.png")
+grid.raster(img)
+```
+
+- When $d =10$, 10\% of data are in the 80\% range.
+- When $d \leq 3$, 10\% of data are in the less than 40\% range.
+
+## How to deal with the curse of dimensionality 
+- Dimension reduction: find a low-dimension approximation to the data (principal component analysis, independent component analysis projection pursuit.)
+- Variable selection: covariates that do not predict $Y$ are removed from the regression. 
+
+
+##  References for this lecture
+
+**HWC** Chapter 9.7 (an introduction to nonparametric regression.)
+
+**HWC** Chapter 12 (density estimation)
+
+**W** Chapter 4 (smoothing: general concepts)
+
+**Seiler2016**: [Lecture notes](http://christofseiler.github.io/stats205/Lecture13/NonlinearRegression.pdf).
+
+<!-- Homework assignemnt 5 HWC Page 616, Problem 1 (histogram with different bin width) Data in `NSM2` package `discrepancy.scores`. -->
+
+<!-- Homework assignemnt 6 HWC Page 624, Problem 8 (kernel density estiamtion and compare two distirbution female and male) -->
+
+<!-- Homework assignemnt 6 HWC Page 627, Problem 17 (Asymptotic Mean Integrated Squared Error (MISE) and the Epanechnikov kernel) find the optimal band-width. -->
+
+<!-- W problem from bias-variance trad-off. -->
+
+<!-- W problem from curse of dimensionality. -->
+

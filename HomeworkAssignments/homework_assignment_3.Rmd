@@ -1,0 +1,63 @@
+---
+title: "STATS 205: Homework Assignment 3 (Spring 2019)"
+author: ""
+date: "4/19/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Solve these problems from the textbook *HWC* [available here](https://onlinelibrary.wiley.com/doi/book/10.1002/9781119196037).
+
+Send your Rmd and PDF files to pjeganat [at] stanford [dot] edu.
+
+**Due on 4/26/2019 at 1.30 p.m.**
+
+Friendly reminder: **Mid-term project proposal due on 5/3/2019 at 1.30 p.m.**
+
+1) In Lecture 6 (Bootstrap II), we saw an example of LSAT and GPA from 15 students. The data is in an R package `bootstrap`.
+```{r}
+library(bootstrap); data(law)
+t(law)
+```
+
+We are interested in inference on the correlation between GPA and LSAT. The point estimate of correlation coefficient is
+```{r}
+theta.hat = cor(law$LSAT, law$GPA); theta.hat
+```
+
+We know that the all possible distinct bootstrap samples can be defined by the weight vector.
+
+```{r}
+library(partitions)
+n = 15
+allCompositions = compositions(n, n);allCompositions[,1:5]
+```
+
+Choose randomly $R = 10,000$ columns of allCompositions. 
+```{r}
+allCompositions.sub = allCompositions[, sample(1:dim(allCompositions)[2], size = 10000, replace = FALSE)]
+```
+
+(i) Compute bootstrap replicates of correlation (use R codes in Lecture 6).
+(ii) Compute standard error of correlation coefficient estimate using these bootstrap replicates.
+
+2) (i) **HWC** Page 21, Problem 9 (discrete data with two categories.) 
+
+  (ii) In addition, find the power of the test if $p =.7$ and $p = .8$. 
+
+3) **HWC** Page 24, Problem 11 (estimate for $p$ and standard error for $\hat{p}$). 
+
+4) **HWC** Page 31, Problem 15 (confidence interval for $p$). 
+
+5) **HWC* Page 33, Problem 23 (Chi-squared test for more than two categories).
+
+6) **HWC* Page 513, Problem 13 (Fisher's exact test on difference on probabilities. Use `fisher.test()` function in R).
+
+7) **HWC* Page 509, Problem 3 (approximate confidence interval for difference of proportions)
+
+8) **HWC* Page 510, Problem 6 (Matched Pairs problem. Use `mcnemar.test()` function in R).
+
+9) **HWC* Page 510, Problem 9 ($2 \times 2$ Chi-squared test for homogeneity).

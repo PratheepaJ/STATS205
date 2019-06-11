@@ -1,0 +1,114 @@
+---
+title: "STATS 205: Homework Assignment 5 (Spring 2019)"
+author: ""
+date: "5/13/2019"
+output:
+  pdf_document: 
+    includes:
+      in_header: header.tex
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Solve problems 2-7 from the textbook *HWC* [available here](https://onlinelibrary.wiley.com/doi/book/10.1002/9781119196037).
+
+Send your Rmd and PDF files to pjeganat [at] stanford [dot] edu.
+
+**Due on 5/20/2019 (Monday) at 1.30 p.m.**
+
+1) "Permutation, parametric and bootstrap tests of hypotheses by Good 2005" (Exercise 4.8, #20, page 78) [link here to the textbook](https://searchworks.stanford.edu/view/12473402). Suppose the observations $\left(X_{1}, \cdots, X_{K} \right)$ are distributed in accordance with the multivariate normal probability density $$\dfrac{\sqrt{\left|D \right|}}{\left(2 \pi \right)^{K/2}} \text{exp} \left[- \dfrac{1}{2} \sum \sum d_{ij} \left(x_{i} - \mu_{i} \right)\left(x_{j} - \mu_{j} \right) \right],$$ where the matrix $D = \left(d_{ij} \right)$ is positive definite; $\left|D\right|$ denotes its determinant; $\E \left( X_{j}\right) = \mu_{j}$; $\E \left(x_{i} - \mu_{i} \right)\left(x_{j} - \mu_{j} \right) = \sigma_{ij}$; and $\sigma_{ij} = \left(D^{-1}\right)_{ij}$, $i,j$-th element of inverse of $D$. If $\sigma_{ii} = \sigma^{2}$ when $i=j$ and $\sigma_{ij} = \sigma_{12}, \hspace{.1in} \forall i,j,$ are the observations independent? exchangeable? 
+
+
+2) **HWC** Page 409, Problem 1 (Kendall test).
+
+The data in Table 8.3 are a subset of the data obtained by Featherston (1971). Among other things, he was interested in the relationship between the weight of tapeworms (Taenia hydati- gena) fed to dogs and the weight of the scoleces recovered from the dogs after 20 days. (A scolex is the attachment end of a tapeworm, consisting of the head and neck.) The cysticerci used in the experiment were collected from sheep carcasses and force-fed to 10 dogs via gelatine capsules. The scoleces were recovered from each dog at autopsy, 20 days after the introduction of the tapeworms. Table 8.3 gives the mean weight of the initial cysticerci and the mean weight of the recovered worms for each of the 10 dogs in the study.
+Test the hypothesis of independence versus the alternative that the mean weight of intro- duced cysticerci is positively correlated with the mean weight of worms recovered.
+```{r}
+library(NSM3)
+cysticerci = c(28.9, 31.8, 12, 9.9, 15, 38, 12.5, 36.5, 8.6, 26.8)
+wormsRecovered = c(1, 7.7, 7.3, 7.9, 1.1, 3.5, 18.9, 33.9, 28.6, 25)
+testKendall = cor.test(cysticerci, wormsRecovered, method = "kendall", alt = "greater")
+testKendall$p.value
+testKendall
+```
+
+We don't have enough evidence to reject that weight of tapeworms (Taenia hydati- gena) fed to dogs and the weight of the scoleces recovered from the dogs after 20 days are independent.
+
+3) **HWC** Page 414, Problem 20 (Kendall's sample correlation coefficient)
+
+Estimate $\tau$ for the tapeworm data of Table 8.3.
+```{r}
+testKendall$estimate
+```
+
+
+4) **HWC** Page 427, Problem 34 (Kendall correlation coefficient confidence interval) do not need to compare the results with Problem 28.
+
+For the cerebral palsy data of Table 8.4, use the bootstrap method to find a confidence interval for $\tau$ with approximate confidence coefficient .90. 
+
+```{r}
+brainWeight = c(515, 286, 469, 410, 461, 436, 479, 198, 389, 262, 536)
+fiberCount = c(32500, 26800, 11410, 14850, 23640, 23820, 29840, 21830, 24650, 22500, 26000)
+
+cerebral = data.frame(brainWeight, fiberCount)
+n = dim(cerebral)[1]
+bootstrap.sample = function(df){
+  boot.sam = df[sample(1:n, size = n, replace = TRUE), ]
+  kendall = cor(boot.sam[, 1], boot.sam[, 2], method = "kendall")
+  return(kendall)
+}
+
+tau.hat.star = replicate(1000, bootstrap.sample(cerebral))
+round(quantile(tau.hat.star, probs =c(.05, .95)), digits = 2)
+```
+
+
+5) **HWC** Page 440, Problem 41 (Spearman test).
+
+Test the hypothesis of independence versus the alternative that the mean weight of introduced cysticerci is positively correlated with the mean weight of worms recovered for the tapeworm data in Table 8.3.
+```{r}
+testSpearman = cor.test(cysticerci, wormsRecovered, method = "spearman", alt = "greater")
+testSpearman$p.value
+```
+
+Based on Spearman's test, we don't have enough evidence to reject that weight of tapeworms (Taenia hydati- gena) fed to dogs and the weight of the scoleces recovered from the dogs after 20 days are independent.
+
+6) **HWC** Page 457, Problem 1 (test for slope).
+
+Johnson et al. (1970) considered the behavior of a cenosphere-resin composite under hydrostatic pressure. The authors pointed out that most deep submersible vehicles utilize a buoyancy material, known as syntactic foam, that is a composite of closely packed hollow glass microspheres embedded in a resin matrix. These microspheres are relatively expensive to manufacture, and the cost of the syntactic foam is principally determined by the cost of the microspheres. The authors also noted that the ash from generating stations burning pulverized coal contains a small proportion of hollow glassy microspheres, known as cenospheres, and these have about the right size distribution for use in syntactic foam. The cenospheres can be readily collected from the ash-disposal method used in certain British generating stations. The authors were thus interested in whether the cenospheres would, in some applications, perform as well as the manufactured microspheres.
+In attempting to assess the usefulness of cenospheres as a component of syntactic foam, Johnson et al. investigated the effects of hydrostatic pressure (such as exists in the ocean depths) on the density of a cenosphere-resin composite. The results are given in Table 9.2. What is the P-value for a test of $\text{H}_{0}: \beta = 0$ against the alternative $\beta >0$ for these data?
+
+```{r}
+library(NSM3)
+pressure = c(0, 5000, 10000, 15000, 20000, 25000, 30000, 100000)
+density = c(0.924, 0.988, 0.992, 1.118, 1.133, 1.145, 1.157, 1.357)
+slopeTest = theil(pressure, density, beta.0 = 0, t = "u", r = 6)
+slopeTest$p.val
+```
+
+
+We conclude that the slop is significantly different from zero.
+
+7) **HWC** Page 485, Problem 33 (rank-based multiple linear regression).
+
+In heart catheterization, a 3-mm-diameter Teflon catheter (tube) is inserted into a major vein or artery at the femoral region and maneuvered up into the heart itself to assess the heart’s physiology and functional ability. Heart catheterizations are sometimes performed on children with congenital heart defects. In such cases, the length of the catheter is often determined by a physician’s educated guess. Rice (2007) considered a data set obtained by Weindling (1977) in a preliminary study involving 12 children. For each child, the exact catheter length required was determined by using a fiuoroscope to check that the tip of the catheter had reached the pulmonary artery. The 12 catheter lengths (cm) and the heights (in) and weights (lb) for the 12 children in the study are given in Table 9.10.
+
+```{r}
+library(Rfit)
+height = c(42.8, 63.5, 37.5, 39.5, 45.5, 38.5, 43.0, 22.5, 37.0, 23.5, 33.0, 58.0)
+weight = c(40.0, 93.5, 35.5, 30.0, 52.0, 17.0, 38.5, 8.5, 33.0, 9.5, 21.0, 79.0)
+
+length = c(37.0, 49.5, 34.5, 36.0, 43.0, 28.0, 37.0, 20.0, 33.5, 30.5, 38.5, 47.0)
+
+fit1 = rfit(length ~ height + weight)
+summary(fit1)
+fit2 = rfit(length ~ height)
+summary(fit2)
+drop.test(fit1, fit2)
+fit3 = rfit(length ~ weight)
+summary(fit3)
+drop.test(fit1, fit3)
+```
+

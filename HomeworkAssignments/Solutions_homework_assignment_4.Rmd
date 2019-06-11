@@ -1,0 +1,314 @@
+---
+title: "STATS 205: Homework Assignment 4 (Spring 2019)"
+author: ""
+date: "4/29/2019"
+output:
+  pdf_document: 
+    includes:
+      in_header: header.tex
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+\blc 
+1) *HWC ** Page 133, Problem 1 (rank sum test - large-sample approximation) \rc [4 points] \blc
+
+The data in Table 4.3 are a subset of the data obtained by Thomas and Simmons (1969), who investigated the relation of sputum histamine levels to inhaled irritants or allergens. The histamine content was reported in micrograms per gram of dry weight of sputum. The subjects for this portion of the study consisted of 22 smokers; 9 of them were allergics and the remaining 13 were asymptomatic (nonallergic) individuals. Care was taken to avoid people who carried out part of their daily work in an atmosphere of noxious gases or other respiratory toxicants. Table 4.3 gives the ordered sputum histamine levels for the 22 individuals in the study.
+Test the hypothesis of equal levels versus the alternative that allergic smokers have higher sputum histamine levels than nonallergic smokers. Use the large-sample approximation.
+\bc 
+
+
+```{r}
+library(dplyr)
+df = data.frame(val = c(1651, 1112, 102.4, 100, 67.6, 65.9, 64.7, 39.6, 31, 48.1, 48, 45.5, 
+  41.7, 35.4, 34.3, 32.4, 29.1, 27.3, 18.9, 6.6, 5.2, 4.7), 
+  group = c(rep("aller", 9), rep("nonaller", 13)))
+df = mutate(df, rk = rank(val))
+W = sum(df$rk[df$group == "aller"])
+library(coin)
+wilcox_test(df$val ~ df$group, alternative  = "greater", distribution  = "asymptotic")
+```
+
+If we use `wilcox.test`, we need to be careful in extracting Wilcoxon test statistic.
+```{r}
+Table4.3 = list(allergics = c(1651, 1112, 102.4, 
+  100, 67.6, 65.9, 64.7, 39.6, 31),
+  nonallergics = c(48.1, 48, 45.5, 
+  41.7, 35.4, 34.3, 32.4, 29.1, 
+  27.3, 18.9, 6.6, 5.2, 4.7))
+m = length(Table4.3$allergics)
+n = length(Table4.3$nonallergics)
+
+U = as.numeric(wilcox.test(x = Table4.3$allergics, y = Table4.3$nonallergics, 
+  alternative  = "greater")$statistic)
+W = U + m*(m+1)/2 # (by the definition of R implmentation)
+
+Exp.W = m*(m + n+ 1)/2
+Var.W = m*n*(m+n+1)/12
+W.star = (W - Exp.W)/sqrt(Var.W)
+1- pnorm(W.star)
+```
+
+We reject the null hypothesis at 5\% significance level in favor of the alterate hypothesis that allergic smokers have higher sputum histamine levels than nonallergic smokers.
+
+\blc 
+2) *HWC ** Page 134, Problem 5 (rank sum test - Wilcoxon) \rc [4 points] \blc
+
+Molitor (1989) conducted a study to see if children who watched TV or film violence were significantly more tolerant of “real-life” violent behavior than children who instead watched a nonviolent TV show or film. Half of the 42 children in the study were shown violent TV (an edited version of The Karate Kid), whereas the other half watched exciting but nonvi- olent sports (highlights from the 1984 Summer Olympic Games). Each child was asked to “watch over” two younger children, supposedly in the next room, via a television monitor. Each child was instructed to go and get the research assistant (who stated she had to leave for an emergency) if the younger children “got into trouble.” What each child witnessed, while alone, was actually a videotaped sequence depicting two small children first play with blocks and then progressively get more violent. That is, they called each other names, then pushed each other, chased each other, fought, and then supposedly broke a video camera while fighting.
+Toleration of violence was measured by the time (in seconds) each child stayed in the room after he or she witnessed the two younger children’s first act of violence. As soon as the subject child left the room, the timing clock was stopped. Each child was subsequently assured that an adult had entered the room where the two children were and that they were not hurt and the video camera was not damaged.
+Do the data of Table 4.4 indicate that the children who viewed the violent TV tend to take longer to seek help (were more tolerant) than the children who viewed the nonviolent sports-action TV? Use Wilcoxon’s W .
+
+\bc
+
+```{r}
+olympics.watchers = c(12, 44, 34, 14, 9, 19, 156, 23, 
+  13, 11, 47, 26, 14, 33, 15, 62, 5, 8, 0, 154, 146)
+karate.kid.watchers = c(37, 39, 30, 7, 13, 139, 45, 25, 16, 146, 94, 16, 
+  23, 1, 290, 169, 62, 145, 36, 20, 13)
+wilcox.test(karate.kid.watchers, 
+  olympics.watchers, alternative = "greater")
+```
+
+At 5\% significance level, there is not enough evidence to reject the null hypothesis that children who viewed the violent TV tended to take similar time to seek help than children who viewed nonviolent sports-action TV.
+
+\blc 
+3) *HWC **  Page 141, Problem 21 (estimate $\delta$ and confidence interval for $\delta$). \rc [4 points] \blc
+
+Consider the data of Table 4.3. Estimate $\delta  = P \left( X < Y\right)$ and determine an approximate 90\% confidence interval for $\delta.$
+
+\bc
+
+```{r}
+Table4.3 = list(allergics = c(1651, 1112, 102.4, 
+  100, 67.6, 65.9, 64.7, 39.6, 31),
+  nonallergics = c(48.1, 48, 45.5, 
+  41.7, 35.4, 34.3, 32.4, 29.1, 
+  27.3, 18.9, 6.6, 5.2, 4.7))
+x = Table4.3$nonallergics
+y = Table4.3$allergics
+m = length(x)
+n = length(y)
+
+U = as.numeric(wilcox.test(x = x, y = y, 
+  alternative  = "less")$statistic)
+delta = U/(m*n); round(delta, digits = 3)
+```
+
+90\% confidence interval for $\delta.$ using bootstrap method.
+```{r message=FALSE, warning=FALSE}
+library(bootstrap) 
+R = 1000
+bootstrap.sample = function(){
+  boot.sam.one = sample(x, replace = TRUE)
+  boot.sam.two = sample(y, replace = TRUE)
+  bwilcox = wilcox.test(boot.sam.one, boot.sam.two, alternative = "less") 
+  boot.delta.hat = as.vector(bwilcox$statistic/(m*n))
+  return(boot.delta.hat)
+}
+
+delta.hat.star = replicate(R, bootstrap.sample())
+
+round(quantile(delta.hat.star, probs =c(.05, .95)), digits = 3)
+```
+
+\blc 
+4) *HWC ** Page 149, Problem 41. (two-sample location problem when unequal variances) \rc [4 points] \blc
+ 
+Apply (BEHRENS–FISHER PROBLEM) FLIGNER–POLICELLO test to Table 4.1. Compare your results with those of Example 4.1.
+\bc
+
+```{r}
+library(NSM3)
+at.term = c(.80, .83, 1.89, 1.04, 1.45, 1.38, 1.91, 1.64, .73, 1.46) 
+gest.age = c(1.15, .88, .90, .74, 1.21)
+
+wilcox.test(at.term, gest.age, alternative="t")
+```
+
+Using Wilcoxon test, the one-sided test p-value is .1272
+
+```{r}
+pFligPoli(at.term, gest.age, method = "Exact")
+```
+
+Using FLIGNER–POLICELLO test, the one-sided test p-value is 1 - 0.9024 = .0976 which is smaller than Wilcoxon test p-value.
+
+\blc 
+5) *HWC ** Page 168, Problem 1. (dispersion problem) \rc [4 points] \blc
+
+Consider the chorioamnion permeability data in Table 4.1. In Section 4.1 we saw that a test procedure based on the Wilcoxon rank sum statistic did not reject the null hypothesis that the human chorioamnion is as permeable to water transfer at 12–26 weeks gestational age as it is at term. With this in mind and using the same data, test the hypothesis of equal dispersions versus the alternative that the variation in tritiated water diffusion across human chorioamnion is different at term than at 12–26 weeks gestational age.
+
+\bc
+
+```{r}
+pAnsBrad(at.term, gest.age, method = "Exact")
+```
+
+Using the Ansari-Bradley test, we get a p-value of 0.0686. Thus, we reject the null hypothesis in favor of the alterate hypothosis that the variation in tritiated water diffusion across human chorioamnion is different at term than at 12–26 weeks gestational age.
+
+\blc
+6) *HWC ** Page 198, Problem 33 (general distribution test) \rc [4 points] \blc
+
+The data in Table 5.8 are a subset of the data obtained by Friedman et al. (1971) in an experiment comparing the average concentrations of human plasma growth hormone both resting and after arginine hydrochloride infusion in relatively coronary-prone subjects (persons with type A behavior patterns) with the corresponding concentrations of relatively coronary- resistant individuals (subjects with type B behavior patterns). Type A behavior is characterized by an excessive sense of time urgency, drive, and competitiveness; type B denotes a converse type of behavior. Earlier studies (cf. Friedman and Rosenman (1959)) indicated that type A individuals may be more prone to coronary heart disease than type B individuals.
+
+Find the P-value for an appropriate test of whether there is any difference between the probability distribution of peak level human plasma growth hormone (after arginine hydrochlo- ride infusion) for type A subjects and that for type B subjects.
+
+\bc
+
+```{r}
+table5.8 <- list(TypeASubjects = c(3.6, 2.6, 4.7, 8.0, 
+  3.1, 8.8, 4.6, 5.8, 4.0, 4.6), 
+  TypeBSubjects = c(16.2, 17.4, 8.5, 
+    15.6, 5.4, 9.8, 14.9, 16.6, 15.9, 5.3, 10.5))
+pKolSmirn(table5.8$TypeASubjects, table5.8$TypeBSubjects, 
+  method = "Exact")
+```
+
+The p-value is 0.0078. Thus, we reject the null hypothesis at 5\% significance level in favor of the alternate hypothesis that there is a difference between the peak level of human plasma growth hormone for type A subjects and type B subjects.
+
+\blc
+7) (Hypothesis testing). This question is taken from **The design of experiment by Sir Ronald A. Fisher (8th edition, 1971). Chapter 3.** [link here](http://www.medicine.mcgill.ca/epidemiology/hanley/tmp/Mean-Quantile/DesignofExperimentsCh-III.pdf).
+
+Darwin raised cross- and self-fertilized corn (Zea mays) plants. He planted equal numbers of each in four different pots, but not same number in each pot. Darwin measured heights of plants. Download and read `Darwin_data.rds` file data from [Canvas @ Stanford](https://canvas.stanford.edu/courses/99104/files/folder/Data?).
+
+```{r}
+Darwin.data = data.frame(pair = seq(1, 15), 
+  pot = c(rep(1, times=3), rep(2, times = 3), 
+    rep(3, times = 5), rep(4, times = 4)), 
+  cross.height = c(23.500, 12.000, 21.00, 22.000, 19.125, 
+    21.500, 22.125, 20.375, 18.250, 21.625, 
+    23.250, 21.000, 22.125, 23.000, 12.000), 
+  self.height = c(17.375, 20.375,20.000, 20.000, 
+    18.375, 18.625, 18.625, 15.250, 16.500, 
+    18.000, 16.250, 18.000, 12.750, 15.500, 18.000))
+Darwin.data
+saveRDS(Darwin.data, "Darwin_data.rds")
+```
+
+(i) Test that there is no difference between heights of crossed and self-fertilized plants using paired sample t-test. What are the assumptions for doing this test? [_Hint: use t.test()_] \rc [4 points] \blc
+
+\bc 
+
+This is a paired two-sample test. We assume that cross height and self height sample are coming from a normal distribution. 
+
+```{r }
+t.test(Darwin.data$cross.height, 
+  Darwin.data$self.height, 
+  alternative = "two.sided", 
+  paired = TRUE)
+```
+
+The test of difference between heights of crossed and self-fertilized plants yielded a p-value of 0.0497. This is less then 0.05, so we can reject the null hypothesis in favor of the alternative hypothesis that there is a difference between the heights.
+
+\blc
+(ii) Test that there is no difference between heights of crossed-fertilized and self-fertilized plants using permutation test (test statistic is sum of the difference). What are the assumptions for doing this test? \rc [4 points] \blc
+
+a) Let $X$ be height of crossed-fertilized plants and $Y$ be height of self-fertilized plants. Compute the diffrence $Z = X - Y$.
+\bc
+
+```{r }
+library(dplyr)
+Darwin.data = mutate(Darwin.data, 
+  Z = cross.height-self.height)
+Darwin.data
+```
+    
+\blc
+b) Test statistic is $T = \sum_{i=1}^{n =15}Z_{i} = \sum_{i=1}^{n =15} | Z_{i}|\delta_{i}$, where $\delta_{i} = 1$ or $\delta_{i} = -1$. Under $\text{H}_{0}$: there is no difference between heights of crossed and self-fertilized plants, $\delta_{i}$ is a fair coin flip $\lbrace -1, 1 \rbrace$. There are $2^{15}=32768$ ways to swap the plus and minus signs, all equaly likely under $\text{H}_{0}$. Use Monte Carlo method to approximate the exact p-value. 
+      [_Hint: Choose nperm = 10,000. Create a matrix of $\text{nperm} \times n.$ Sample using sample(c(-1,1), size = n, replace = TRUE) for each row. Multiply each row with absoulte value of $Z$. For each row, compute test statistic value. This is a two-sided test $\text{H}_{A}:$ there is difference between heights of crossed-fertilized and self-fertilized plants. Thus, p-value = $2 \times P\left(T \geq t_{0}\right)$._]
+
+\bc
+
+We assume that under the null hypothesis, the pairs are exchangeable.
+```{r }
+abs.diff = abs(Darwin.data$Z)
+t0 = sum(Darwin.data$Z)
+nperm = 10000
+sign.matrix = matrix(replicate(nperm, sample(c(-1,1), size = length(abs.diff), replace = TRUE)), 
+  nrow = nperm, byrow = TRUE)
+
+sign.matrix.abs.diff = sweep(sign.matrix, MARGIN=2, 
+  abs.diff, `*`)
+T.star = apply(sign.matrix.abs.diff, 1, 
+  function(x){sum(x)})
+P.value = 2*mean(T.star >= t0)
+P.value
+```
+
+We can reject the null hypothesis in favor of the alternative hypothesis that there is a difference between the heights.
+
+\blc 
+(iii) Test that there is no difference between heights of crossed-fertilized and self-fertilized plants using Wilcoxon signed rank test. What are the assumptions for doing this test? \rc [4 points] \blc
+
+\bc 
+
+```{r }
+wilcox.test(x = Darwin.data$cross.height, 
+  y = Darwin.data$self.height, paired = TRUE)
+```
+
+This is a paired two-sample test. We assume that cross height and self height sample are coming from a continuous distribution. 
+
+The p-value from the Wilcoxon signed rank test is .04126. This is less then 0.05, so we can reject the null hypothesis in favor of the alternative hypothesis that there is a difference between the heights.
+
+\blc
+(iv) Test that there is no mean difference between heights of crossed-fertilized and self-fertilized plants using nonparamteric bootstrap method and studentized statistic. What are the assumptions for doing this test? \rc [4 points] \blc
+    [_Hint: Compute $Z^{'}_{i} = Z_{i} - \bar{Z}$. Compute studentized statistic $\dfrac{\text{mean}}{\dfrac{\text{standard deviation}}{\sqrt{n}}}$ for each bootstrap sample of $Z^{'}$. Compute p-value._]
+    
+\bc
+Let's consider our data is the difference between heights of crossed-fertilized and self-fertilized plants and denote by $Z$. Let $\Delta$ be the location paramter of $Z$. 
+
+$\text{H}_{0}: \Delta = 0$ versus $\text{H}_{0}: \Delta > 0$.
+
+```{r }
+Z = Darwin.data$Z
+```
+
+
+Studentized test statistic is $T = \dfrac{\bar{Z}}{s/\sqrt{n}}$, where $s$ is the standard deveiation of $Z$.
+```{r}
+Z.bar = mean(Z); Z.bar
+sd.Z = sd(Z)
+n = length(Z)
+studentized.stat.obs = Z.bar/(sd(Z)/sqrt(n)); studentized.stat.obs
+```
+
+Consider $Z^{'} = Z - \bar{Z}$ for drawing bootstrap sample. $Z^{'}$ follows a continuous distribution with median zero.
+
+Compute $T^{*} = \dfrac{\bar{Z^{' *}}}{s^{' *}/\sqrt{n}}$, where $s^{' *}$ is the standard deveiation of the bootstrap sample of $Z^{'}$.
+
+```{r}
+Z.prime = Z - Z.bar 
+
+test.stat = function(Z.prime){
+  boot.sample = sample(Z.prime, replace = TRUE)
+  studentized.stat.star = mean(boot.sample)/(sd(boot.sample)/sqrt(n))
+  return(studentized.stat.star)
+}
+ 
+studentized.stat.star = replicate(R, test.stat(Z.prime))
+
+p.value  = mean(studentized.stat.star >= studentized.stat.obs); p.value
+```
+
+Based on the nonparamteric bootstrap method, we can reject the null hypothesis in favor of the alternative hypothesis that there is a difference between the heights.
+
+\rc
+If we use bootstrap confidence interval to test the hypothesis, then draw bootstrap sample from $Z$ and let the test statistic is mean of $Z$. 
+
+```{r}
+bootstrap.sample = function(Z){
+  boot.sample = sample(Z, replace = TRUE)
+  Z.bar.star = mean(boot.sample)
+  return(Z.bar.star)
+}
+Z.bar.star = replicate(R, bootstrap.sample(Z))
+
+quantile(Z.bar.star, c(0.025, 0.975))
+```
+
+This 95\% confidence interval does not include zero so we can reject the null hypothesis in favor of the alternative hypothesis that there is a difference between the heights.
+\bc

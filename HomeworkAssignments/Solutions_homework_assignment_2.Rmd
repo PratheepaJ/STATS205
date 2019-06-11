@@ -1,0 +1,286 @@
+---
+title: "STATS 205: Solutions for Homework Assignment 2 (Spring 2019)"
+author: ""
+date: "5/2/2019"
+output:
+  pdf_document: 
+    includes:
+      in_header: header.tex
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+Solve these problems from the textbooks [HWC](https://onlinelibrary.wiley.com/doi/book/10.1002/9781119196037), **W**, and **ET**.
+
+```{r}
+set.seed(1000)
+```
+
+\blc
+1) [**HWC**: page 58, problem 20](https://onlinelibrary.wiley.com/doi/book/10.1002/9781119196037) (sensitivity to gross errors- mean and HL) [4 points]
+
+Change the value of $X_{3}$, as given in Table 3.1, from 1.62 to 16.2. How does this affect the value of $\bar{Z} = \sum_{i=1}^{9}Z_{i}/9$ (mean)? How does it affect the estiamte of $theta$ given by $\hat{\theta}$ (H-L)? Interprete these calculations in light of comment 16.
+\bc
+
+Before changing 1.62 to 16.2:
+```{r}
+library(NSM3)
+library(Rfit)
+Table3.1 = data.frame(Xi = c(1.83, .50, 1.62, 2.48, 1.68, 1.88, 1.55, 3.06, 1.30), 
+  Yi= c(.878, .647, .598, 2.05, 1.06, 1.29, 1.06, 3.14, 1.29))
+
+mean(Table3.1$Yi - Table3.1$Xi)
+median(walsh(Table3.1$Yi - Table3.1$Xi))
+```
+
+After changing 1.62 to 16.2:
+```{r}
+Table3.1.changed = data.frame(Xi = c(1.83, .50, 16.2, 2.48, 1.68, 1.88, 1.55, 3.06, 1.30), 
+  Yi= c(.878, .647, .598, 2.05, 1.06, 1.29, 1.06, 3.14, 1.29))
+mean(Table3.1.changed$Yi - Table3.1.changed$Xi)
+median(walsh(Table3.1.changed$Yi - Table3.1.changed$Xi))
+```
+
+Comment 16 discusses the sensitivity of the mean and Hodges-Lehman estimators to gross errors. This example shows that mean is highly sensitive whereas H-L is insensitive to gross errors. The reason is that mean has an asympototic breakdown point of 0 whereas H-L has .29. Thus, changing even one observation gives a bad estimate of the mean. 
+
+\blc 
+2) [**HWC**: Page 58, problem 25](https://onlinelibrary.wiley.com/doi/book/10.1002/9781119196037) (influence by outlying observations - mean and HL)[4 points]
+
+Explain why the Hodges–Lehmann estimator is less influenced by outlying observations than is the sample mean of the $Z$'s.
+
+\bc
+
+The Hodges-Lehmann has an asymptotic breakdown point of 0.29, whereas mean has 0. Moreover, the influence function of mean is not bounded, but that of H-L estimator is bounded.
+
+\blc
+3) [**HWC**: Page 79, problem 60](https://onlinelibrary.wiley.com/doi/book/10.1002/9781119196037) (sensitivity to gross errors- mean and median) [4 points]
+
+Change the value of $Y_{3}$ in Table 3.5 from 73 to 173. What effect does this have on the value of $\bar{Z} = \sum_{i=1}^{25}Z_{i}/25$? What is the new value of $\tilde{\theta}$ (3.58)? Interpret these calculations. (See comment 40.)
+\bc
+
+Before changing $Y_{3}$ in Table 3.5 from 73 to 173:
+```{r}
+Table3.5 = data.frame(Xi = c(5.8,13.5,26.1,7.4,7.6,23,10.7,9.1,
+                      19.3,26.3,17.5,17.9,18.3,14.2,55.2,
+                      15.4,30,21.3,26.8,8.1,24.3,21.3,18.2,
+                      22.5,31.1),
+Yi = c(5,21,73,25,3,77,59,13,36,46,9,25,
+59,38,70,36,55,46,25,30,29,46,71,31,33))
+
+mean(Table3.5$Yi-Table3.5$Xi)
+median(Table3.5$Yi-Table3.5$Xi)
+```
+
+After changing $Y_{3}$ in Table 3.5 from 73 to 173:
+```{r}
+Table3.5.changed = data.frame(Xi = c(5.8,13.5,26.1,7.4,7.6,23,10.7,9.1,
+                      19.3,26.3,17.5,17.9,18.3,14.2,55.2,
+                      15.4,30,21.3,26.8,8.1,24.3,21.3,18.2,
+                      22.5,31.1),
+Yi = c(5,21,173,25,3,77,59,13,36,46,9,25,
+59,38,70,36,55,46,25,30,29,46,71,31,33))
+
+mean(Table3.5.changed$Yi - Table3.5.changed$Xi)
+median(Table3.5.changed$Yi - Table3.5.changed$Xi)
+```
+
+The gross error observation does not influence the median because it has a breakdown point of 50\% compared to the sample mean that has asymptotic breakdown point of 0. 
+\blc
+
+4) (**W**: page 39, problem 11.) Let $X_{1}, \cdots, X_{n} \sim \text{Uniform}\left(0, \theta \right)$. The estimator of interest is $\hat{\theta} = X_{\text{max}} = \text{max}\lbrace X_{1}, \cdots, X_{n}\rbrace$. Generate a data set of size 50 with $\theta = 1$.
+    (i) Find the distribution of $\hat{\theta}$ by generating 100,000 samples of sample size 50 from $\text{Uniform}\left(0, 1\right)$ (this will give an approximation to the true distribution of $\hat{\theta}$).[4 points]
+    (ii) Compare the true distribution of $\hat{\theta}$ in (i) to the histogram from the nonparametric bootstraps. Use QQ-plot to compare the true distribution and bootstrap sampling distribution of $\hat{\theta}$.[4 points]
+    
+\bc 
+
+True distirbution of $\hat{\theta} = \text{max}\lbrace X_{1}, \cdots, X_{n}\rbrace$.
+```{r}
+library(ggplot2)
+R = 100000
+df = matrix(replicate(R, runif(n = 50, min = 0, max = 1)), nrow = 50, byrow = FALSE)
+theta.hat = apply(df, 2, function(x){max(x)})
+ggplot(data.frame(theta.hat = theta.hat)) + 
+  geom_density(aes(x = theta.hat, y = ..scaled..), color = "blue", fill = "blue") +
+  xlab(bquote(hat(theta))) +
+  ylab("") +
+  theme_bw() +
+  ggtitle("Sampling distribution") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+Bootstrap approximated sampling distribution of $\hat{\theta} = \text{max}\lbrace X_{1}, \cdots, X_{n}\rbrace$
+```{r}
+# Generate a sample from Uniform (0,1)
+observed = runif(n =50, min = 0, max = 1)
+# bootstrap samples and bootstrap replicates
+B = 1000
+boot.samples  = matrix(replicate(B , sample(observed, size = length(observed), 
+  replace = TRUE)), 
+  nrow = 50, byrow = FALSE)
+theta.hat.star = apply(boot.samples, 2, function(y){max(y)})
+ggplot(data.frame(theta.hat.star = theta.hat.star)) + 
+  geom_density(aes(x = theta.hat.star, y = ..scaled..), 
+    color = "blue", fill = "blue") +
+  xlab(bquote(hat(theta))) +
+  ylab("") +
+  theme_bw() +
+  ggtitle("Bootstrap sampling distribution") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+Quantile - Quantile plot
+
+```{r}
+theta.hat.quantiles = quantile(theta.hat, probs=seq(0,1,.01))
+theta.hat.star.quantiles = quantile(theta.hat.star, probs=seq(0,1,.01))
+df.quantiles = data.frame(theta.hat.quantiles = theta.hat.quantiles,
+  theta.hat.star.quantiles = theta.hat.star.quantiles)
+ggplot(df.quantiles) +
+  geom_point(aes(x = theta.hat.quantiles, y = theta.hat.star.quantiles))+
+  xlab("True sampling distirbution") +
+  ylab("Bootstrap sampling distribution")
+
+```
+
+$\hat{\theta} = \text{max}\lbrace X_{1}, \cdots, X_{n}\rbrace$ is not a smooth function of $F$, the cumulative distribution function of uniform distribution. Q-Q plot shows that the bootstrap sampling distribution does not approximate the true sampling distribution of $\hat{\theta}$.
+
+\blc
+
+5) (**W**: page 39, problem 12.) Suppose that 50 people are given placebo and 50 are given a new treatment. Thirty placebo patients show improvement, while 40 treated patients show improvement. Let $\tau = p_{1} - p_{2}$ where $p_{2}$ is the probability of improving under treatment and $p_{1}$ is the probability of improving under placebo.[4 points]
+    (i) Find the maximum likelihood estimate of $\tau$.
+    (ii) Find the standard error of the maximum likelihood estimate $\hat{\tau}$ using the bootstrap.
+    (iii) Find the 90\% percentile confidence interval for $\tau$ using the bootstrap.
+
+\bc
+
+The maximum likelihood estimate of $\tau$:
+```{r}
+labels = c("nimprovement","nsubjects") 
+treatment = c(40, 50)
+placebo = c(30, 50)
+data = data.frame(treatment, placebo) 
+rownames(data) = labels
+
+p2 =  data["nimprovement","treatment"]/data["nsubjects","treatment"]
+p1 = data["nimprovement","placebo"]/data["nsubjects","placebo"]
+
+tau.hat = p1 - p2
+tau.hat
+```
+
+The standard error of the maximum likelihood estimate $\hat{\tau}$
+```{r}
+sample.two = c(rep(1, times = data["nimprovement","treatment"]), 
+  rep(0, times = (data["nsubjects","treatment"] - data["nimprovement","treatment"])))
+
+sample.one = c(rep(1, times = data["nimprovement","placebo"]), 
+  rep(0, times = (data["nsubjects","placebo"] - data["nimprovement","placebo"])))
+
+ bootstrap.sample = function() {
+    boot.sam.one = sample(sample.one, replace = TRUE) 
+    boot.sam.two = sample(sample.two, replace = TRUE) 
+    rate.one.star = sum(boot.sam.one)/length(boot.sam.one)
+    rate.two.star = sum(boot.sam.two)/length(boot.sam.two)
+    tau.hat.star = rate.one.star - rate.two.star
+    return(tau.hat.star)
+ }
+ 
+R = 1000
+tau.hat.star = replicate(R, bootstrap.sample())
+sd(tau.hat.star)
+```
+
+90\% percentile confidence interval for $\tau$
+```{r}
+quantile(tau.hat.star, probs = c(.05, .95))
+```
+
+\blc
+
+6) (**ET**: page 152, problem 11.3.) Generate 100 samples $X_{1}, \cdots, X_{20}$ from a normal population $\text{N}\left(\theta, 1 \right)$ with $\theta = 1$.[4 points]
+    (i) For each sample compute the bootstrap and jackknife estimate of variance for $\hat{\theta} = \bar{X}$ and compute the mean and standard deviation of these variance estimates over the 100 samples. 
+    (ii) Repeat (a) for the the statistic $\hat{\theta} = \bar{X}^{2}$, and compare the results. Give an explanation for your findings.
+    
+\bc
+
+```{r}
+n = 20
+x = rnorm(n, mean = 1, sd = 1)
+samples.100 = matrix(replicate(100, rnorm(n, mean = 1, sd = 1)), nrow = n, byrow = FALSE)
+```
+
+(i) (a) Bootstrap estimate of variance $Var_{\text{boot}}\left(\bar{X}\right)$ for 100 samples of size $n = 20$.
+```{r}
+library(bootstrap)
+R = 1000
+theta.hat = function(x){mean(x)}
+com.bootstrap.var.for.each.sample = apply(samples.100, 2, function(for.each.sample){
+  theta.hat.star = bootstrap(for.each.sample, nboot = R, theta = theta.hat)$thetastar
+  var.theta.hat.star = var(theta.hat.star)
+  return(var.theta.hat.star)
+})
+
+```
+
+Mean and variance of bootstrap varinace estiamte $Var_{\text{boot}}\left(\bar{X}\right)$ over 100 samples:
+```{r}
+round(mean(com.bootstrap.var.for.each.sample), digits = 4)
+round(var(com.bootstrap.var.for.each.sample), digits = 4)
+```
+
+(b) Jackknife estimate of variance $Var_{\text{boot}}\left(\bar{X}\right)$ for 100 samples of size $n = 20$.
+```{r}
+theta.hat = function(x){mean(x)}
+com.jackknife.var.for.each.sample = apply(samples.100, 2, function(for.each.sample){
+  jack.se = jackknife(for.each.sample, theta = theta.hat)$jack.se
+  var.theta.hat.star = jack.se^2
+  return(var.theta.hat.star)
+})
+```
+
+Mean and variance of bootstrap varinace estiamte $Var_{\text{boot}}\left(\bar{X}\right)$ over 100 samples:
+```{r}
+round(mean(com.jackknife.var.for.each.sample), digits = 4)
+round(var(com.jackknife.var.for.each.sample), digits = 4)
+```
+
+(ii) (a) Bootstrap estimate of variance $Var_{\text{boot}}\left(\bar{X}^{2}\right)$ for 100 samples of size $n = 20$.
+```{r}
+library(bootstrap)
+R = 1000
+theta.hat = function(x){mean(x)^2}
+com.bootstrap.var.for.each.sample = apply(samples.100, 2, function(for.each.sample){
+  theta.hat.star = bootstrap(for.each.sample, nboot = R, theta = theta.hat)$thetastar
+  var.theta.hat.star = var(theta.hat.star)
+  return(var.theta.hat.star)
+})
+
+```
+
+Mean and variance of bootstrap varinace estiamte $Var_{\text{boot}}\left(\bar{X}^{2}\right)$ over 100 samples:
+```{r}
+round(mean(com.bootstrap.var.for.each.sample), digits = 4)
+round(var(com.bootstrap.var.for.each.sample), digits = 4)
+```
+
+(b) Jackknife estimate of variance $Var_{\text{boot}}\left(\bar{X}\right)$ for 100 samples of size $n = 20$.
+```{r}
+theta.hat = function(x){mean(x)^2}
+com.jackknife.var.for.each.sample = apply(samples.100, 2, function(for.each.sample){
+  jack.se = jackknife(for.each.sample, theta = theta.hat)$jack.se
+  var.theta.hat.star = jack.se^2
+  return(var.theta.hat.star)
+})
+```
+
+Mean and variance of bootstrap varinace estiamte $Var_{\text{boot}}\left(\bar{X}\right)$ over 100 samples:
+```{r}
+round(mean(com.jackknife.var.for.each.sample), digits = 4)
+round(var(com.jackknife.var.for.each.sample), digits = 4)
+```
+
+
+$\bar{X}$ is an unbiased estimator for $\theta$ whereas $\bar{X}^{2}$ is a biased estiamtor for $\theta$. The mean and variance of bootstrap and jackknife of $Var_{\text{boot}}\left(\bar{X}\right)$ over 200 samples is smaller than the mean and variance of bootstrap and jackknife of $Var_{\text{boot}}\left(\bar{X}^{2}\right)$. Moreover, the bootstrap method has smaller error than jackknife in computing $Var_{\text{boot}}\left(\bar{X}\right)$ and $Var_{\text{boot}}\left(\bar{X}^{2}\right)$.
