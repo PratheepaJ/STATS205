@@ -7,11 +7,9 @@ Suggested_Journal_Papers.Rmd
 ClassList/
 Gradings/
 HomeworkAssignments/
-LectureNotes/*.html
+LectureNotes/
+docs/.*html
 MyNotes/
 References/
-Syllabus/sample_syllabus/
-Syllabus/*.docx
-Syllabus/*.pdf
-Syllabus/*.html
+Syllabus/
 Textbook/
