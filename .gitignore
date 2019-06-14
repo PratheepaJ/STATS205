@@ -6,6 +6,7 @@ Article_and_summary.Rmd
 Suggested_Journal_Papers.Rmd
 ClassList/
 Gradings/
+HomeworkAssignments/
 HomeworkAssignments/Students_solution/
 HomeworkAssignments/*.html
 HomeworkAssignments/*.pdf
@@ -14,6 +15,7 @@ LectureNotes/*.html
 LectureNotes/*.pdf
 MyNotes/
 References/
+Syllabus/
 Syllabus/sample_syllabus/
 Syllabus/*.html
 Syllabus/*.docx

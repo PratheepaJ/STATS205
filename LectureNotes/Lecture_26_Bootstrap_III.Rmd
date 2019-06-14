@@ -659,7 +659,7 @@ $$\alpha_{1} = \Phi \left(\hat{z}_{0} + \dfrac{\hat{z}_{0}+ z^{\alpha}}{1- \hat{
 - $z^{\alpha}$ - $100\alpha$th percentile point of $\text{N}\left(0,1\right)$.
 - $\hat{z}_{0} = \Phi^{-1}\left( \dfrac{\# \lbrace\hat{\theta}^{*}\left(b\right) < \hat{\theta}\rbrace}{B}\right)$, 
     - where $\Phi^{-1}$ is the inverse function of the $\text{N}\left(0,1\right)$.
-- $\hat{a} = \dfrac{\sigma_{i=1}^{n}\left(\hat{\theta}_{(\cdot)} -\hat{\theta}_{(i)}  \right)^{3}}{6 \left\lbrace \sigma_{i=1}^{n}\left(\hat{\theta}_{(\cdot)} -\hat{\theta}_{(i)}  \right)^{2} \right\rbrace^{3/2}}$.
+- $\hat{a} = \dfrac{\sum_{i=1}^{n}\left(\hat{\theta}_{(\cdot)} -\hat{\theta}_{(i)}  \right)^{3}}{6 \left\lbrace \sum_{i=1}^{n}\left(\hat{\theta}_{(\cdot)} -\hat{\theta}_{(i)}  \right)^{2} \right\rbrace^{3/2}}$.
     - Compute the estimate by deleting $i$-th observation, $\hat{\theta}_{(i)}$.
     - $\hat{\theta}_{(\cdot)} = \dfrac{\sum_{i=1}^{n}\hat{\theta}_{(i)} }{n}$.
     
