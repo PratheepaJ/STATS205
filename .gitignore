@@ -12,6 +12,8 @@ HomeworkAssignments/*.html
 HomeworkAssignments/*.pdf
 HomeworkAssignments/Data/
 LectureNotes/*.html
+LectureNotes/*.png
+LectureNotes/*.rds
 MyNotes/
 References/
 Syllabus/
