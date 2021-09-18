@@ -1,9 +1,9 @@
 *.html
-*.pdf
 *.xlsx
 *.docx
 Article_and_summary.Rmd
 Suggested_Journal_Papers.Rmd
+Suggested_Journal_Papers.pdf
 ClassList/
 Gradings/
 HomeworkAssignments/
