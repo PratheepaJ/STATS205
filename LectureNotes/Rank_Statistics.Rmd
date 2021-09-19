@@ -1,0 +1,55 @@
+---
+title: "Rank Statistics"
+author: "Pratheepa Jeganathan"
+date: "4/7/2019"
+output: 
+  pdf_document:
+    includes:
+      in_header: header.tex
+---
+
+**Joint distribution of ranks**
+
+Let $\vR = \left(R_{1}, \cdots, R_{n}\right)$ be the rank of $\vZ = \left(Z_{1}, \cdots, Z_{n}\right)$.
+
+The number of permutation of ranks $\vr$ from $n$ objects is $n!$.
+
+Thus, $P\left( \vR = \vr \right) = \dfrac{1}{n!}$.
+
+**Marginal distribution of ranks**
+
+The probability that rank $R_{i}$ takes any value between $1,\cdots , n$ is $\dfrac{1}{n}$. Thus, $P\left( R_{i} = r \right) = \dfrac{1}{n}$ for $r = 1, \cdots, n$.
+
+Let us prove it for $P\left( R_{1} =  1\right) = \dfrac{1}{n}$.
+
+Proof: 
+\begin{equation}
+\begin{split}
+P\left( R_{1} =  1\right) = & \sum_{R_{n} = n}^{n}\sum_{R_{n-1} = n-1}^{n}\sum_{R_{n-2} = n-2}^{n} \cdots \sum_{R_{3} = 3}^{n}\sum_{R_{2} = 2}^{n}\dfrac{1}{n!}\\
+=& \sum_{R_{n} = n}^{n}\sum_{R_{n-1} = n-1}^{n}\sum_{R_{n-2} = n-2}^{n} \cdots \sum_{R_{3} = 3}^{n} (n-1) \dfrac{1}{n!}\\
+=& \sum_{R_{n} = n}^{n}\sum_{R_{n-1} = n-1}^{n}\sum_{R_{n-2} = n-2}^{n} \cdots (n-2)(n-1) \dfrac{1}{n!}\\
+=& \sum_{R_{n} = n}^{n}\sum_{R_{n-1} = n-1}^{n} (3) \cdots (n-2)(n-1) \dfrac{1}{n!}\\
+=& \sum_{R_{n} = n}^{n} (2)(3) \cdots (n-2)(n-1) \dfrac{1}{n!}\\
+=& (1) (2) (3) \cdots (n-2)(n-1) \dfrac{1}{n!}\\
+=& \dfrac{(n-1)!}{n!}\\
+=& \dfrac{1}{n}.
+\end{split}
+\end{equation}
+
+
+Moreover, $P\left(R_{i} = r, R_{j} = s  \right) = \dfrac{1}{n(n-1)}$. Thus, $P\left(R_{i} = r, R_{j} = s  \right) \neq P\left(R_{i} = r\right)P\left(R_{j} = s  \right)$. This implies $R_{i}$'s are dependent.
+
+
+We can also show that 
+
+\begin{equation}
+\E\left(R_{i}\right) = \sum_{i = 1}^{n} i \dfrac{1}{n} = \dfrac{(n+1)}{2}, \hspace{.2in} i = 1, \cdots, n.
+\end{equation}
+
+\begin{equation}
+\V\left(R_{i}\right) = \E\left(R_{i}^{2}\right) - \left(\E\left(R_{i}\right)\right)^{2}=\dfrac{(n+1)(n-1)}{12}, \hspace{.2in} i = 1, \cdots, n.
+\end{equation}
+
+\begin{equation}
+\text{Cov}\left(R_{i}, R_{j}\right) = \E\left(R_{i}R_{j}\right) - \E\left(R_{i}\right)\E\left(R_{j}\right)=\dfrac{-(n+1)}{12} , \hspace{.2in} i,j = 1, \cdots, n \hspace{.2in} \text{and} \hspace{.2in} i \neq j.
+\end{equation}
